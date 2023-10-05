@@ -1,0 +1,94 @@
+version: '3.7'
+
+services:
+    xnat-web:
+       image: xnat:latest
+       deploy:
+          replicas: 1
+          restart_policy:
+            condition: any
+          placement:
+            constraints: [node.role == manager]
+          resources:
+            limits:
+              cpus: '2'
+              memory: 4500M
+       ports:
+         - "8080:8080"
+         - "8104:8104"
+       depends_on:
+         - xnat-db
+       environment:
+         - XNAT_HOME=/data/xnat/home
+       secrets:
+         - pgpass
+       volumes:
+         # too slow 
+         - @ARCHIVE_PATH@/archive:/data/xnat/archive
+         - @XNAT_HOME@/build:/data/xnat/build
+         - @XNAT_HOME@/tomcat_logs:/data/xnat/home/logs
+         - @XNAT_HOME@/scripts:/data/scripts
+         - @XNAT_HOME@/inbox:/data/xnat/inbox
+         #LINX- /var/run/docker.sock:/var/run/docker.sock
+         #WINX- //var/run/docker.sock://var/run/docker.sock
+         - @IMPORT_DATA_FOLDER@:/data/import_data
+         #WINX- ./volume/postgres-data:/pg_backup
+    xnat-db:
+       image: postgres-xnat:latest
+       deploy:
+          replicas: 1
+          restart_policy:
+            condition: any
+          placement:
+            constraints: [node.role == manager]
+          resources:
+            limits:
+              cpus: '3'
+              memory: 4000M
+       environment:
+         POSTGRES_USER: @PG_USER@
+         POSTGRES_PASSWORD_FILE: /run/secrets/pgpass
+         POSTGRES_DB: xnat
+       command: postgres
+       secrets:
+         - pgpass
+       #LINXvolumes:
+        #LINUX - use original....
+        #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
+    xnat-nginx:
+       image: nginx-xnat:latest
+       deploy:
+          replicas: 1
+          resources:
+            limits:
+              cpus: "1"
+              memory: 200M
+          restart_policy:
+            condition: any
+          placement:
+            constraints: [ node.role == manager ]
+       volumes:
+        - @XNAT_HOME@/certificates:/etc/ssl
+        - @XNAT_HOME@/nginx_logs:/var/log/nginx
+        #LINX- /var/run/docker.sock:/var/run/docker.sock:ro
+        #WINX- //var/run/docker.sock://var/run/docker.sock:ro
+       ports:
+        - "80:80"
+        - "443:443"
+#        - target: 80
+#          published: 80
+#          protocol: tcp
+#          mode: host
+#        - target: 443
+#          published: 443
+#          protocol: tcp
+#          mode: host
+       depends_on:
+        - xnat-web
+
+secrets:
+  pgpass:
+     external: true
+
+
+

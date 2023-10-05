@@ -1,0 +1,91 @@
+version: '3.7'
+#docker stack
+
+services:
+    xnat-web:
+       image: xnat:latest
+       deploy:
+          replicas: 1
+          restart_policy:
+            condition: on-failure
+          placement:
+            constraints: [node.role == manager]
+          resources:
+            limits:
+              cpus: '4'
+              memory: 4500M
+       ports:
+        - "8104:8104"
+        - "8080:8080"
+       depends_on:
+         - xnat-db
+       environment:
+         - XNAT_HOME=/data/xnat/home
+       secrets:
+         - pgpass
+       volumes:
+         # too slow
+         - @ARCHIVE_PATH@/archive:/data/xnat/archive
+         - @XNAT_HOME@/build:/data/xnat/build
+         - @XNAT_HOME@/tomcat_logs:/data/xnat/home/logs
+         - @XNAT_HOME@/scripts:/data/scripts
+         #LINX- /var/run/docker.sock:/var/run/docker.sock
+         #WINX- //var/run/docker.sock://var/run/docker.sock
+         - @IMPORT_DATA_FOLDER@:/data/import_data
+         #WINX- ./volume/postgres-data:/pg_backup
+    xnat-db:
+       image: postgres-xnat:latest
+       deploy:
+          replicas: 1
+          restart_policy:
+            condition: on-failure
+          placement:
+            constraints: [node.role == manager]
+          resources:
+            limits:
+              cpus: '6'
+              memory: 6000M
+       environment:
+         POSTGRES_USER: @PG_USER@
+         POSTGRES_PASSWORD_FILE: /run/secrets/pgpass
+         POSTGRES_DB: xnat
+       command: postgres
+       secrets:
+         - pgpass
+       #LINXvolumes:
+        ##- ./postgres/postgresql.conf:/etc/postgresql.conf
+        #LINUX - use original....
+        #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
+
+    xnat-nginx:
+       image: nginx-xnat:latest
+       deploy:
+          replicas: 1
+          resources:
+            limits:
+              cpus: "1"
+              memory: 200M
+          restart_policy:
+            condition: on-failure
+       volumes:
+        - @XNAT_HOME@/certificates:/etc/ssl
+        - @XNAT_HOME@/nginx_logs:/var/log/nginx
+       ports:
+        - "80:80"
+        - "443:443"
+       depends_on:
+        - xnat-web
+
+    xnat-orthanc:
+      #container_name: xnat-orthanc
+      image: jodogne/orthanc
+      volumes:
+        - @PWD@/orthanc.json:/etc/orthanc/orthanc.json:ro
+      ports:
+        - "8042:8042"
+        - "4242:4242"
+
+
+secrets:
+  pgpass:
+     external: true
