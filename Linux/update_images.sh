@@ -3,8 +3,14 @@
 
 #Check dockerhib for suitable tag
 #https://hub.docker.com/_/nginx?tab=tags&page=1
-PG_VERSION="postgres:12-alpine"
+PG_VERSION="postgres:16"
 NGINX_VERSION="nginx:stable-alpine"
+
+# need to set timezone in docker images to match
+timezone=$(cat /etc/timezone)
+echo "Timezone: $timezone"
+
+
 
 linux_dir=$(dirname "$0")
 cd $linux_dir
@@ -17,7 +23,7 @@ docker pull "$NGINX_VERSION"
 
 echo "#########Building new docker images..."
 cd postgres
-docker build -t postgres-xnat .
+docker build  --build-arg TIMEZONE=${timezone} -f Dockerfile -t postgres-xnat .
 cd ../nginx
 docker build -t nginx-xnat .
 cd ../Linux

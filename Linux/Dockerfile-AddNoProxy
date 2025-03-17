@@ -1,0 +1,17 @@
+FROM xnat:latest
+
+# If your XNAT is configured to run behind a proxy, but you need to add a server for XSync that is not, use this to modify existing xnat image
+# assumes you are using xnat:latest docker image in docker-compose.yml. Run:
+# docker build --build-arg REMOTE_URL=... --build-arg LOCAL_URL=...  -f Dockerfile-AddNoProxy -t xnat-proxy .
+# Edit docker-compose.yml to use xnat:proxy and restart.
+
+ARG REMOTE_URL
+ARG LOCAL_URL
+
+ENV REMOTE=$REMOTE_URL
+ENV LOCAL=$LOCAL_URL
+
+ENV NO_PROXY=localhost,${LOCAL},127.0.0.1,xnat-web,${REMOTE}
+ENV no_proxy=localhost,${LOCAL},127.0.0.1,xnat-web,${REMOTE}
+RUN sed -i "s#|xnat-web#|xnat-web|${REMOTE}|#g" /usr/local/tomcat/bin/setenv.sh
+

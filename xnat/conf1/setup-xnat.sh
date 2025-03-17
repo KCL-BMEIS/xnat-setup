@@ -38,18 +38,18 @@ if [ -d "/pg_backup" ]; then
 		do
 		   sql_file=$(find "$folder" -exec stat \{} --printf="%n \n" \; | sort -n -r  | head -1) 
 		done
-		if [[ $sql_file = *".sql.gz"* ]]; then	
-			gunzip -k -f $sql_file
-			sql_unpacked="${sql_file/.gz/}" 
-			echo "Windows: Backup database file detected. Restoring database using  $sql_unpacked" >> /data/scripts/logs/setup.log
-			psql -h xnat-db -p 5432 -U xnat  -f $sql_unpacked
+		if [[ $sql_file = *".sql.gz"* ]]; then
+		  gunzip -k -f $sql_file
+			sql_unpacked="${sql_file/.gz/}"
+		  echo "Backup database file detected. Restoring database using  $sql_unpacked" >> /data/scripts/logs/setup.log
+			psql -h xnat-db -p 5432 -U xnat  -f $sql_unpacked xnat
 		fi
 fi
 
 echo 'Starting Server' >> /data/scripts/logs/setup.log
 /usr/local/tomcat/bin/startup.sh &
 #/usr/local/tomcat/bin/catalina.sh run &
-
+#/data/xnat/run_tomcat.sh &
 
 
 echo 'Starting cron' >> /data/scripts/logs/setup.log
@@ -135,7 +135,7 @@ else
   curl -u admin:admin  -X PUT "http://localhost:8080/xapi/events/prefs" -H  "accept: */*" -H  "Content-Type: application/json" -d "{  \"enabled\": true}"
 
    ## configure docker if installed:
-   curl -u admin:admin  'http://localhost:8080/xapi/docker/server' -H 'Content-Type: application/json'  --data-raw '{"name":"Local socket","host":"unix:///var/run/docker.sock","cert-path":"","swarm-mode":true,"path-translation-xnat-prefix":"/data/xnat","path-translation-docker-prefix":"/xnat-data/xnat","pull-images-on-xnat-init":true,"container-user":"","auto-cleanup":true}'
+   curl -u admin:admin  'http://localhost:8080/xapi/docker/server' -H 'Content-Type: application/json'  --data-raw '{"name":"Local socket","host":"unix:///var/run/docker.sock","cert-path":"","swarm-mode":false,"path-translation-xnat-prefix":"/data/xnat","path-translation-docker-prefix":"/xnat-data/xnat","pull-images-on-xnat-init":true,"container-user":"","auto-cleanup":true}'
 
 
   echo "Disabling admin and guest users" >> /data/scripts/logs/setup.log

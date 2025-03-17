@@ -18,7 +18,7 @@ warning_messages="### Warning messages: $newline"
 
 
 linux_dir=$(dirname "$0")
-cd $linux_dir
+cd "$linux_dir"
 cd ..
 install_dir=$(pwd)
 if [ ! -f "$install_dir/Linux/build.sh" ]
@@ -34,27 +34,27 @@ then
 fi
 
 # remove spaces, convert to unix format and read configuration file
-sed -i "s/ //g"  $install_dir/xnat.cfg
-dos2unix $install_dir/xnat.cfg
-source $install_dir/xnat.cfg
+sed -i "s/ //g"  "$install_dir/xnat.cfg"
+dos2unix "$install_dir/xnat.cfg"
+source "$install_dir/xnat.cfg"
 #used to be seperate, now uses same as xnat_home
 
 if [ "$in_command" == "upgrade" ]
 then
-    read -p "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
+    read -p -r "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
     if [ "$cont" != "y" ]
     then
       exit
     fi
     ###get psql password
-    LINE=$(docker ps | egrep xnat-web | cut -c1-12)
+    LINE=$(docker ps | grep -E xnat-web | cut -c1-12)
     docker exec -it "$LINE" cp /data/xnat/home/config/xnat-conf.properties /data/scripts
-    psql_pwd=$(sed -n 's/^datasource.password=//p'  $xnat_home/scripts/xnat-conf.properties)
-    rm -rf $xnat_home/scripts/xnat-conf.properties
+    psql_pwd=$(sed -n 's/^datasource.password=//p'  "$xnat_home/scripts/xnat-conf.properties")
+    rm -rf "$xnat_home/scripts/xnat-conf.properties"
     #echo "psql password: $psql_pwd"
     #exit
 else
-  read -p "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
+  read -p -r "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
       if [ "$cont" != "y" ]
     then
       exit
@@ -63,7 +63,7 @@ fi
 
 
 
-chmod 770 $install_dir/Linux/clean_docker.sh
+chmod 770 "$install_dir/Linux/clean_docker.sh"
 
 echo "### CHECKING to see if shared folders exist   ###"
 if [ -d "$xnat_home" ] && [ "$in_command" != "upgrade" ]
@@ -119,7 +119,7 @@ fi
 
 if [ ${#psql_pwd} -le 4 ] && [ "$in_command" != "upgrade" ]
 then
-    echo "Error: Check xnat.cfg - psql_pwd too short"
+    echo "Error: Check xnat.cfg - psql_pwd too short $psql_pwd"
     exit 1
 fi
 
@@ -215,16 +215,16 @@ echo "# admin email:  $xnat_admin_email            ###"
 
 if [ "$in_command" != "upgrade" ]
 then
-    mkdir -p $xnat_home/
-    mkdir -p $xnat_home/archive/
-    mkdir -p $postgres_path/postgres-data/
-    mkdir -p $xnat_home/certificates/
-    mkdir -p $xnat_home/tomcat_logs/
-    mkdir -p $xnat_home/nginx_logs/
-    mkdir -p $xnat_home/build/
-    mkdir -p $xnat_home/inbox/
-    mkdir -p $import_data_folder
-    chmod 777 $import_data_folder
+    mkdir -p "$xnat_home/"
+    mkdir -p "$xnat_home/archive/"
+    mkdir -p "$postgres_path/postgres-data/"
+    mkdir -p "$xnat_home/certificates/"
+    mkdir -p "$xnat_home/tomcat_logs/"
+    mkdir -p "$xnat_home/nginx_logs/"
+    mkdir -p "$xnat_home/build/"
+    mkdir -p "$xnat_home/inbox/"
+    mkdir -p "$import_data_folder"
+    chmod 777 "$import_data_folder"
 fi
 
 if [ -d "$xnat_home/archive" ]
@@ -336,6 +336,17 @@ sed -i  "s#@POSTGRES_PATH@#$postgres_path#g"   "$DOCKER_FILE"
 sed -i  "s#@IMPORT_DATA_FOLDER@#$import_data_folder#g"   "$DOCKER_FILE"
 sed -i "s/@PG_PWD@/$psql_pwd/g"   "$DOCKER_FILE" 
 sed -i "s/@PG_USER@/$psql_user/g"   "$DOCKER_FILE" 
+# set docker subnet
+if [ ${#docker_subnet} -ge 6 ]
+then
+  docker network create --driver overlay --subnet $docker_subnet  xnat-stack-net
+  sed -i "s/#networks:/networks:/g"   "$DOCKER_FILE"
+  sed -i "s/#xnat-net:/xnat-net:/g"   "$DOCKER_FILE"
+  sed -i "s/#- xnat-net/- xnat-net/g"   "$DOCKER_FILE"
+   sed -i "s/#name: xnat-stack-net/name: xnat-stack-net/g"   "$DOCKER_FILE"
+   sed -i "s/#external: true/external: true/g"   "$DOCKER_FILE"
+fi
+
 
 ## COPY PLUGINS AND WEBAPPS
 cd plugins
@@ -387,6 +398,8 @@ fi
 
 cd ..
 mkdir -p $xnat_home/scripts/plugins
+# in case of upgrading
+rm $xnat_home/scripts/plugins/*
 cp -R ./plugins/  $xnat_home/scripts/
 
 
@@ -397,8 +410,8 @@ fi
 
 cp -r ./scripts/* $xnat_home/scripts/
 
-mkdir -p $xnat_home/scripts/logs/
-mkdir -p $xnat_home/scripts/access_logs/
+mkdir -p "$xnat_home/scripts/logs/"
+mkdir -p "$xnat_home/scripts/access_logs/"
 
 
 #### SET PROXY
@@ -482,7 +495,7 @@ cd postgres
 cd ..
 
 #protect certificates
-chmod -R 660 $xnat_home/certificates/
+chmod -R 660 "$xnat_home/certificates/"
 
 
 
@@ -551,7 +564,7 @@ then
     sleep 60
 
     cd Linux
-    timeout 600 tail -f $xnat_home/scripts/logs/setup.log
+    timeout 600 tail -f "$xnat_home/scripts/logs/setup.log"
 
 fi
 

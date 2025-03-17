@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source /data/xnat/home/xnat.cfg
+psql_pwd="$(head /run/secrets/pgpass)"
 export PGPASSWORD=$psql_pwd
 
 for folder in /pg_backup/*

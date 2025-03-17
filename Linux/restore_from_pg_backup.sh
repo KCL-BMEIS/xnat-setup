@@ -25,8 +25,12 @@ fi
 
 # editing
 sed -i  "s|#WINX- ./volume/postgres-data|- /xnat-data/pg_backup|g"  ../docker-compose.yml
-
+echo "##############################"
+echo "Do NOT stop the script early. Allow XNAT to restart fully and this script to finish."
+echo "##############################"
 ./restart.sh
 
 #comment out so if restarting does not replace current XNAT
-sed -i  "s|- /xnat-data/pg_backup|#- /xnat-data/pg_backup|g"  ../docker-compose.yml
+sed -i  "s|- /xnat-data/pg_backup|#WINX- ./volume/postgres-data|g"  ../docker-compose.yml
+echo "##############################"
+echo "Restore finished."

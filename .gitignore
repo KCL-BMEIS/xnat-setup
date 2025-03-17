@@ -2,6 +2,7 @@
 /.idea
 /xnat/xnat.war
 /import_data
+/TESTDATA
 /shared_data
 /xnat_proxy
 /webapps
@@ -30,3 +31,5 @@ test-proxy.sh
 #docker-compose-test.yml
 #orthanc.json
 #/tests/xnat_test_linux.cfg
+/pl-backup/
+/pl-backup/plugins/
