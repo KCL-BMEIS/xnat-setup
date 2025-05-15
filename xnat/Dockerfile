@@ -21,19 +21,15 @@ ARG XNAT_HOME=/data/xnat/home
 ARG TOMCAT_XNAT_FOLDER=ROOT
 ARG TOMCAT_XNAT_FOLDER_PATH=${CATALINA_HOME}/webapps/${TOMCAT_XNAT_FOLDER}
 
-# sets timezone so matches host
-RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime  #&& dpkg-reconfigure -f noninteractive tzdata
+
 
 # Fix sh and install dependencies
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN export DEBIAN_FRONTEND=noninteractive && export TZ=${TZ}  \
-    && apt-get -yq update && apt-get -yq install dcmtk dos2unix mc cron curl python3 python3-pip zip jq  postgresql-client-16
+    && apt-get -yq update && apt-get -yq install dcmtk dos2unix mc cron curl python3 python3-pip zip jq  postgresql-client-16 tzdata
 
-# Install pg-client-16 on jammy
-#RUN install -d /usr/share/postgresql-common/pgdg
-#RUN curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
-#RUN sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-#RUN apt -yq update && apt -yq install postgresql-client-16
+# sets timezone so matches host
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 
 
 RUN mkdir /data /data/xnat /data/xnat/home
@@ -69,10 +65,9 @@ RUN dos2unix /data/xnat/home/*
 RUN chmod 775 /data/xnat/setup-xnat.sh /data/xnat/run_tomcat.sh
 RUN chmod -R 770 /data/xnat/home
 
-RUN apt-get update
+RUN apt-get -yq update && apt -yq install python3-pydicom python3-docopt python3-lxml python3-requests
 #RUN pip3 install   pydicom docopt lxml requests
 
-RUN apt -yq install python3-pydicom python3-docopt python3-lxml python3-requests
 
 # if ldap:
 # ADD conf1/ldap-provider.properties /data/xnat/home/config

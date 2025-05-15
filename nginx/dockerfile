@@ -1,7 +1,11 @@
 FROM nginx:stable-alpine
+ARG TIMEZONE
+#takes timezone from host in build.sh
 
 # needed for apk
 USER root
+RUN apk add --no-cache tzdata
+ENV TZ=$TIMEZONE
 
 RUN apk update && apk upgrade && apk add logrotate
 RUN rm -v /etc/nginx/nginx.conf

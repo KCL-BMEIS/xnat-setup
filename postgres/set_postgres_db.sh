@@ -37,6 +37,7 @@ sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_worker_process
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_workers_per_gather = $max_parallel_workers_per_gather"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_workers = $max_parallel_workers"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_maintenance_workers = $max_parallel_maintenance_workers"
+# Do NOT set huge pages on on Linux systems
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET huge_pages = $huge_pages"
 
 

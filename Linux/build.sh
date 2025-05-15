@@ -41,7 +41,7 @@ source "$install_dir/xnat.cfg"
 
 if [ "$in_command" == "upgrade" ]
 then
-    read -p -r "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
+    read -p  "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
     if [ "$cont" != "y" ]
     then
       exit
@@ -54,7 +54,7 @@ then
     #echo "psql password: $psql_pwd"
     #exit
 else
-  read -p -r "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
+  read -p  "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
       if [ "$cont" != "y" ]
     then
       exit
@@ -255,7 +255,7 @@ cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.propert
 
 # set tomcat memory
 echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseConcMarkSweepGC  -XX:-OmitStackTraceInFastThrow\"" >> ./xnat/conf1/setenv.sh
+echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -Djava.awt.headless=true  -Dxnat.home=/data/xnat/home  -XX:+UseConcMarkSweepGC  -XX:-OmitStackTraceInFastThrow\"" >> ./xnat/conf1/setenv.sh
 ### in Linux, only CATALINA important as runs first
 echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx}  -Djava.awt.headless=true -XX:+UseConcMarkSweepGC\"" >> ./xnat/conf1/setenv.sh
 
@@ -470,7 +470,7 @@ docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${ti
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 cd nginx
-docker build -t nginx-xnat .
+docker build   --build-arg TIMEZONE=${timezone} -t nginx-xnat .
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 cd postgres

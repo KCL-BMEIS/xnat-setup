@@ -21,7 +21,7 @@ do
                 find  "$dir" -name *.log -print0 | xargs -0 rm
                 find  "$dir" -name *.xml -print0 | xargs -0 rm
                 find  "$dir" -name *.json -print0 | xargs -0 rm
-                storescu +sd +r -aec XNAT -aet XNAT localhost 8104 "$dir"
+                dcmsend +sd +r -aec XNAT -aet XNAT localhost 8104 "$dir"
                  rm -r $dir
             fi
         fi

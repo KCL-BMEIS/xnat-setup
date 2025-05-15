@@ -16,8 +16,8 @@ services:
          - xnat-db
        environment:
          - XNAT_HOME=/data/xnat/home
-       secrets:
-         - pgpass
+#       secrets:
+#         - pgpass
        #networks:
          #- xnat-net
        volumes:

@@ -133,6 +133,16 @@ do
 			mv $FINAL_BACKUP_DIR"$DATABASE".custom.in_progress $FINAL_BACKUP_DIR"$DATABASE".custom
 		fi
 	fi
+		if [ $ENABLE_DIRECTORY_FORMAT_BACKUPS = "yes" ]
+	then
+		echo "DirectoryFormat backup of $DATABASE"
+
+		if ! pg_dump -Fd -j "$CPUS_TO_USE" -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" -f  $FINAL_BACKUP_DIR"$DATABASE".in_progress; then
+			echo "[!!ERROR!!] Failed to produce directory format backup database $DATABASE" 1>&2
+		else
+			mv $FINAL_BACKUP_DIR"$DATABASE".gz.in_progress $FINAL_BACKUP_DIR"$DATABASE".gz
+		fi
+	fi
  
 done
  

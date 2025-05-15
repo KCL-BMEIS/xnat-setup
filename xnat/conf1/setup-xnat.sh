@@ -20,7 +20,9 @@ cp /data/scripts/plugins/*.jar /data/xnat/home/plugins/
 ## if there is a logo...
 cp /data/scripts/logo.png /usr/local/tomcat/webapps/ROOT/images/
 
+
 echo 'Starting setup script for '"$site_name"''  > /data/scripts/logs/setup.log
+date >> /data/scripts/logs/setup.log
 
 chmod 600 /data/xnat/home/xnat.cfg
 chmod 600 /data/xnat/home/.bash_profile
@@ -31,19 +33,25 @@ chmod 600 /data/xnat/home/.bash_profile
 sleep 100
 
 ##### PGRESTORE ON WINDOWS! HAve to do beforehand ####
+# Using Fd -  directory backup
 if [ -d "/pg_backup" ]; then 
 		psql_pwd="$(head /run/secrets/pgpass)"
     export PGPASSWORD="$psql_pwd"
 		for folder in /pg_backup/*
 		do
-		   sql_file=$(find "$folder" -exec stat \{} --printf="%n \n" \; | sort -n -r  | head -1) 
-		done
-		if [[ $sql_file = *".sql.gz"* ]]; then
-		  gunzip -k -f $sql_file
-			sql_unpacked="${sql_file/.gz/}"
-		  echo "Backup database file detected. Restoring database using  $sql_unpacked" >> /data/scripts/logs/setup.log
-			psql -h xnat-db -p 5432 -U xnat  -f $sql_unpacked xnat
-		fi
+        #		do
+        #		   sql_file=$(find "$folder" -exec stat \{} --printf="%n \n" \; | sort -n -r  | head -1)
+        #		done
+        #		if [[ $sql_file = *".sql.gz"* ]]; then
+        #		  echo "Backup database file detected. Uncompressing....$sql_file " >> /data/scripts/logs/setup.log
+        #		  gunzip -k -f $sql_file
+        #			sql_unpacked="${sql_file/.gz/}"
+        echo "Backup database directory detected. Restoring database using   $folder" >> /data/scripts/logs/setup.log
+        #psql -h xnat-db -p 5432 -U xnat  -f $sql_unpacked xnat
+        # much faster as can do in parralel, j=5 cpu
+        pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j 5 -C $folder
+			done
+
 fi
 
 echo 'Starting Server' >> /data/scripts/logs/setup.log

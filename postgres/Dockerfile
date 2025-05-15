@@ -5,10 +5,10 @@ ARG TIMEZONE
 RUN apt-get install tzdata
 ENV TZ=$TIMEZONE
 
-RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 # not in alpine - && dpkg-reconfigure -f noninteractive tzdata
 
 # debian:
-#FROM postgres:16
-#RUN localedef -i de_DE -c -f UTF-8 -A /usr/share/locale/locale.alias de_DE.UTF-8
-#ENV LANG de_DE.utf8
+#FROM postgres:16 - do en_US and XNAt is US?
+#RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+#ENV LANG en_US.utf8
