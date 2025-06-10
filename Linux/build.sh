@@ -39,8 +39,7 @@ dos2unix "$install_dir/xnat.cfg"
 source "$install_dir/xnat.cfg"
 #used to be seperate, now uses same as xnat_home
 
-if [ "$in_command" == "upgrade" ]
-then
+if [ "$in_command" == "upgrade" ]; then
     read -p  "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
     if [ "$cont" != "y" ]
     then
@@ -53,6 +52,8 @@ then
     rm -rf "$xnat_home/scripts/xnat-conf.properties"
     #echo "psql password: $psql_pwd"
     #exit
+elif [ "$in_command" == "CI" ]; then
+   echo "Building XNAT - CI"
 else
   read -p  "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
       if [ "$cont" != "y" ]
@@ -96,17 +97,12 @@ then
     exit 1
 fi
 
+
+
 if [ "$xnat_admin_user" = "admin" ]
-then
-    echo "Error: Check xnat.cfg - xnat_admin_user cannot be admin"
-    exit 1
-fi
-
-
-if [[ "$xnat_admin_user" = "admin" ]]
-then
-    echo "Error: Check xnat.cfg - xnat_admin_user cannot be admin"
-    exit 1
+  then
+      echo "Error: Check xnat.cfg - xnat_admin_user cannot be admin"
+      exit 1
 fi
 
 
@@ -190,8 +186,6 @@ then
 fi
 
 
-
-
 stacks=$(docker stack ls)
 if [[ $stacks = *"xnat-stack"* ]]; then
     echo "### xnat already running.... stopping current service and rebuilding###" 
@@ -199,9 +193,7 @@ if [[ $stacks = *"xnat-stack"* ]]; then
 	sleep 60
 fi
 
-
 docker swarm leave
-
 
 echo "### Installing XNAT - $site_name   ###"
 echo "### Using config file xnat.cfg      ###"
@@ -243,9 +235,6 @@ else
 fi
 
 
-
-
-
 ### need to edit setup_xnat.sh...
 cp xnat.cfg ./xnat/xnat.cfg
 cp ./xnat/templates/prefs-init.ini-template ./xnat/conf1/prefs-init.ini
@@ -253,11 +242,35 @@ cp ./xnat/templates/site-config-template ./xnat/conf1/siteConfig.txt
 cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.properties
 
 
-# set tomcat memory
+# SET TOMCAT MEMORY
+# Java memory can be more than Xmx
+# JVM memory = Heap memory+ Metaspace + CodeCache + (ThreadStackSize * Number of Threads) + DirectByteBuffers + Jvm-native
+# -XX:MetaspaceSize
+# -XX:MaxMetaspaceSize
+# -OmitStackTraceInFastThrow - disables optimisation....
+# for java 8
+# -XX:+UseG1GC - default on some system (Xmx > 6gb), attempts high throuput and short pauses
+# -XX:+UseParallelGC - use multi cores - NOT G1GC - do not use
+# -XX:ParallelGCThreads=6 \\  - number of cores....
+# # -XX:MaxGCPauseMillis=200 - not that important for XNAT, if GC takes longer...
+# -XX:GCTimeRatio, like above, memory more important than time down
+# -XX:+UseStringDeduplication - reduces memory by 10% by finding duplicates
+# -Djava.awt.headless=true \\ - ie, no java windows etc, good for server side apps
+
+#-XX:ConcGCThreads=3 \\
+#-XX:+ParallelRefProcEnabled \\
+#-XX:+UnlockExperimentalVMOptions \\
+#-XX:+DisableExplicitGC \\
+
 echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -Djava.awt.headless=true  -Dxnat.home=/data/xnat/home  -XX:+UseConcMarkSweepGC  -XX:-OmitStackTraceInFastThrow\"" >> ./xnat/conf1/setenv.sh
+
+echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
+
+# OLD version
+#echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseConcMarkSweepGC  -XX:-OmitStackTraceInFastThrow\"" >> ./xnat/conf1/setenv.sh
+
 ### in Linux, only CATALINA important as runs first
-echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx}  -Djava.awt.headless=true -XX:+UseConcMarkSweepGC\"" >> ./xnat/conf1/setenv.sh
+echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" >> ./xnat/conf1/setenv.sh
 
 
 
@@ -265,12 +278,11 @@ echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx}  -Djava.awt.headles
 URL=$xnat_host
 #sed -i -e '/@SIF@/{r ./xnat/SeriesImportFilter.txt' -e 'd}'  ./xnat/conf2/siteConfig.txt ./xnat/conf1/siteConfig.txt
 sed -i "s/@XNAT_ADMIN_USER@/$xnat_admin_user/g"  ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
-sed -i "s#@SITEURL@#$URL#g"                  ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
+sed -i "s#@SITEURL@#$URL#g"     ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
 
 
 sed -i "s#@PIPELINE_URL@#$URL#g" ./xnat/conf1/siteConfig.txt
 sed -i "s#@SITEURL@#$URL#g" ./xnat/conf1/siteConfig.txt
-
 
 
 sed -i "s/@ADMIN_EMAIL@/$xnat_admin_email/g" ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt

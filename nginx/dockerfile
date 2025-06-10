@@ -4,16 +4,17 @@ ARG TIMEZONE
 
 # needed for apk
 USER root
-RUN apk add --no-cache tzdata
 ENV TZ=$TIMEZONE
 
-RUN apk update && apk upgrade && apk add logrotate
+RUN apk update && apk upgrade && apk add  --no-cache tzdata logrotate
+
 RUN rm -v /etc/nginx/nginx.conf
 RUN rm /etc/nginx/conf.d/*
 COPY nginx.conf /etc/nginx/
 COPY xnat.conf /etc/nginx/conf.d/
 COPY nginx /etc/logrotate.d/
-RUN chmod -R 775 /etc/nginx/
+RUN chmod -R 600 /etc/nginx/
+RUN chmod 600 /etc/logrotate.d/*
 
 
 EXPOSE 444

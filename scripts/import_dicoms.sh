@@ -17,12 +17,13 @@ do
            #echo "$dir $num2"
             if [ "$num1" == "$num2" ] && [ "$num1" != "0" ];
             then
-                  echo "Found DICOMs in import directory. Numbers static, importing $dir"
+                printf "\n $(date): Found DICOMs in import directory. Numbers static, importing $dir \n"
+
                 find  "$dir" -name *.log -print0 | xargs -0 rm
                 find  "$dir" -name *.xml -print0 | xargs -0 rm
                 find  "$dir" -name *.json -print0 | xargs -0 rm
                 dcmsend +sd +r -aec XNAT -aet XNAT localhost 8104 "$dir"
-                 rm -r $dir
+                rm -r $dir
             fi
         fi
     done

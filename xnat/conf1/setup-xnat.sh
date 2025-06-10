@@ -20,8 +20,8 @@ cp /data/scripts/plugins/*.jar /data/xnat/home/plugins/
 ## if there is a logo...
 cp /data/scripts/logo.png /usr/local/tomcat/webapps/ROOT/images/
 
-
-echo 'Starting setup script for '"$site_name"''  > /data/scripts/logs/setup.log
+echo '#########################################'  > /data/scripts/logs/setup.log
+echo 'Starting setup script for '"$site_name"''  >> /data/scripts/logs/setup.log
 date >> /data/scripts/logs/setup.log
 
 chmod 600 /data/xnat/home/xnat.cfg
@@ -112,6 +112,7 @@ else
 
 
   #CREATE ADMIN USER
+  printf "\nCreating Admin Users" >> /data/scripts/logs/technicalsetup.log
   curl -u admin:admin -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{
     "email": "'"$xnat_admin_email"'",
     "enabled": true,
@@ -119,14 +120,16 @@ else
     "firstName": "xnat",
     "lastName": "xnat",
     "password": "ignored",
-    "confirmPassword":"ignored"
+    "confirmPassword":"ignored",
     "username": "'"$xnat_admin_user"'"
-  }' 'http://localhost:8080/xapi/users'  > /data/scripts/logs/technicalsetup.log
+  }' 'http://localhost:8080/xapi/users'  >> /data/scripts/logs/technicalsetup.log
   #ADD ADMIN USER TO HOSPITAL PROJECT
+  printf "\nAdding user as Project Owner" >> /data/scripts/logs/technicalsetup.log
   curl -u admin:admin -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' -d '[
     "ALL_DATA_ADMIN",
     "'"$site_name"'_owner"
   ]' 'http://localhost:8080/xapi/users/'"$xnat_admin_user"'/groups'  >> /data/scripts/logs/technicalsetup.log
+  printf "\nSetting User Role" >>/data/scripts/logs/technicalsetup.log
   curl -u admin:admin -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' -d '[
     "Administrator",
     "DataManager",
@@ -134,7 +137,7 @@ else
   ]' 'http://localhost:8080/xapi/users/'"$xnat_admin_user"'/roles'  >> /data/scripts/logs/technicalsetup.log
 
 
-  echo "Installing Config File" >> /data/scripts/logs/setup.log
+  echo "Installing Config File" >> /data/scripts/logs/technicalsetup.log
   #### INSTALL SITECONFIG
   settings="$(cat /data/xnat/home/siteConfig.txt)"
   curl -u admin:admin  -X POST --header 'Content-Type: application/json' --header 'Accept: */*' -d "$settings"  'http://localhost:8080/xapi/siteConfig' >> /data/scripts/logs/technicalsetup.log
@@ -146,7 +149,7 @@ else
    curl -u admin:admin  'http://localhost:8080/xapi/docker/server' -H 'Content-Type: application/json'  --data-raw '{"name":"Local socket","host":"unix:///var/run/docker.sock","cert-path":"","swarm-mode":false,"path-translation-xnat-prefix":"/data/xnat","path-translation-docker-prefix":"/xnat-data/xnat","pull-images-on-xnat-init":true,"container-user":"","auto-cleanup":true}'
 
 
-  echo "Disabling admin and guest users" >> /data/scripts/logs/setup.log
+  echo "Disabling admin and guest users" >> /data/scripts/logs/technicalsetup.log
   #DISABLE ADMIN & GUEST
   curl -u admin:admin -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://localhost:8080/xapi/users/guest/enabled/false' >> /data/scripts/logs/technicalsetup.log
   #cannot set password, well not easily.

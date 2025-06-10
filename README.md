@@ -1,11 +1,5 @@
-## TEST 1.10
-* xnat.war - copies directly plugins and xnat.war
-* changed base image to jdk21
-* UseConcMarkSweepGC removed, not recognised by jdk21. Set in build.sh
-* read commands in build.sh: -r flag not recognised! "do not allow backslashes to escape any characters"
-* ? Enable JVMCI using -XX:+EnableJVMCI. Pops up when running tomcat
 
-## Updates 16th May 2025
+## Updates 10th June 2025
 * update_xnat_war.sh updated to build a docker image from base instead of modifying existing container.
 * docker subnet added as advanced option.
 * MIT Licence added.
@@ -23,6 +17,8 @@
 * Container service log directory cleaned up, deleted after 30 days. /data/xnat/archive/CONTAINER/EXEC. Else becomes huge number of directories. 
 * import_dicoms.sh - storescu replaced with dcmsend
 * pg_back and pg_restore: now uses parrallel implementation and directory format in order to use pg_restore.
+* BUGFIX: admin user not created during build. Fixed.
+* Java GC replaced. Settings changed. 
 
 ## Updates 5th October 2023
  * XNAT 1.8.9.1 default

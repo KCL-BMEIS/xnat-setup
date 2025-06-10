@@ -1,4 +1,5 @@
 * The file 'nginx' is the logrotate config file. Default is daily backups and keeps for 6 months.
-* To test, ./docker-bash nginx, then logrotate -v /etc/logrotate.d/nginx
-* Logrotate will reload logging (not kill nginx proc) - kill -USR1 `cat /var/run/nginx.pid`
+* To test, ./docker-bash nginx, then logrotate -vf /etc/logrotate.d/nginx
+* NOTE: nginx.pid NOT in /var/run but in /run in alpine image!
+* Logrotate will reload logging (not kill nginx proc) - kill -USR1 `cat /run/nginx.pid`
 * Log files are mounted in /xnat-data/xnat/nginx_logs

@@ -16,8 +16,9 @@ services:
          - xnat-db
        environment:
          - XNAT_HOME=/data/xnat/home
-#       secrets:
-#         - pgpass
+       # do I need pgpass passed on? I use config file....
+       #secrets:
+       #  - pgpass
        #networks:
          #- xnat-net
        volumes:
