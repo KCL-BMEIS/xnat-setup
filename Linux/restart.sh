@@ -75,7 +75,8 @@ else
         then
           rm -f *ohif-viewer*
           echo "Updating OHIF Viewer to $ohif_viewer_version"
-          wget "${bitbucket_repo}/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/ohif-viewer-$ohif_viewer_version.jar"
+          wget "https://xnat.org/files/ohif-viewer-xnat-plugin/ohif-viewer-$ohif_viewer_version.jar"
+          #wget "${bitbucket_repo}/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/ohif-viewer-$ohif_viewer_version.jar"
           rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download ohif viewer plugin: rc:$rc $newline"; fi
         fi
 

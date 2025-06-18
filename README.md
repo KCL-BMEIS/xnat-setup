@@ -1,5 +1,5 @@
 
-## Updates 10th June 2025
+## Updates 18th June 2025
 * update_xnat_war.sh updated to build a docker image from base instead of modifying existing container.
 * docker subnet added as advanced option.
 * MIT Licence added.
@@ -16,7 +16,7 @@
 * site-config template updated for 1.9+. Default month format MMM (Jul,Mar etc)
 * Container service log directory cleaned up, deleted after 30 days. /data/xnat/archive/CONTAINER/EXEC. Else becomes huge number of directories. 
 * import_dicoms.sh - storescu replaced with dcmsend
-* pg_back and pg_restore: now uses parrallel implementation and directory format in order to use pg_restore.
+* pg_back and pg_restore: now uses parallel implementation and directory format in order to use pg_restore.
 * BUGFIX: admin user not created during build. Fixed.
 * Java GC replaced. Settings changed. 
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 in_command=$1
+CI=$2
 
 # need to set timezone in docker images to match
 timezone=$(cat /etc/timezone)
@@ -39,9 +40,9 @@ dos2unix "$install_dir/xnat.cfg"
 source "$install_dir/xnat.cfg"
 #used to be seperate, now uses same as xnat_home
 
-if [ "$in_command" == "upgrade" ]; then
+if [ "$in_command" == "upgrade"  ] ; then
     read -p  "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
-    if [ "$cont" != "y" ]
+    if [ "$cont" != "y" ]  && [ "$CI" != "CI" ]
     then
       exit
     fi
@@ -396,7 +397,7 @@ fi
 if [  "$ohif_viewer" = true ]
 then
   rm -f *ohif-viewer*
-  wget "${bitbucket_repo}/icrimaginginformatics/ohif-viewer-xnat-plugin/downloads/ohif-viewer-$ohif_viewer_version.jar"
+  wget "https://xnat.org/files/ohif-viewer-xnat-plugin/ohif-viewer-$ohif_viewer_version.jar"
   rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download ohif viewer plugin: rc:$rc $newline"; fi
 fi
 if [  "$jupyter" = true ]
