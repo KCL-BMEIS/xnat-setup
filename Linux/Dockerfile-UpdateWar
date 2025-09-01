@@ -3,8 +3,8 @@ FROM xnat:latest
 # Use update_xnat_war.sh - it will use this file to build a new docker image.
 # docker build --build-arg XNAT_V="$XNAT_VER" -f Dockerfile-UpdateWar -t xnat:"$XNAT_VER" .
 
-ARG XNAT_V
-ENV XNAT_VER=$XNAT_V
+ARG XNAT_VERSION
+ENV XNAT_VER=$XNAT_VERSION
 ARG TOMCAT_XNAT_FOLDER=ROOT
 ARG TOMCAT_XNAT_FOLDER_PATH=${CATALINA_HOME}/webapps/${TOMCAT_XNAT_FOLDER}
 

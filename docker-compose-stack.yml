@@ -17,8 +17,8 @@ services:
        environment:
          - XNAT_HOME=/data/xnat/home
        # do I need pgpass passed on? I use config file....
-       #secrets:
-       #  - pgpass
+       secrets:
+         - pgpass
        #networks:
          #- xnat-net
        volumes:
@@ -53,9 +53,14 @@ services:
          - pgpass
        #networks:
          #- xnat-net
-       #LINXvolumes:
-        #LINUX - use original....
-        #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
+       volumes:
+         # set shared memory limit when using docker compose - default 64mb, too small. Set to 1GB
+         - type: tmpfs
+           target: /dev/shm
+           tmpfs:
+             size: 1024000000
+         #LINUX - use original....
+         #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
     xnat-nginx:
        image: nginx-xnat:latest
        deploy:

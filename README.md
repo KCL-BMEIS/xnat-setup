@@ -1,5 +1,5 @@
 
-## Updates 18th June 2025
+## Updates 20th August 2025
 * update_xnat_war.sh updated to build a docker image from base instead of modifying existing container.
 * docker subnet added as advanced option.
 * MIT Licence added.
@@ -9,7 +9,7 @@
 * BUGFIX: NGinx, wrong timezone. Now built with host TZ.
 * Postgresql: set default docker base image to Posgresql:16 - debian as more stable than alpine and extensible.
 * huge_pages added to pg_settings. Should be set to OFF for Linux
-* Changed default docker server. With XNAT 1.9+ Container service works if changed from docker swarm to just docker.
+* Changed default docker server from swarm to docker. Due to bug in XNAT, swarm needs manual config.
 * Script added run_tomcat.sh - tomcat automatically restarts if it stops at any point.
 * site_monitor.sh script runs as cronjob on host. Restarts docker stack if XNAT not reachable.
 * XNAT base image upgraded from focal to noble (ubuntu 20.04 to ubuntu 24.04) as focal EOL. Changed packages accordingly.
@@ -18,7 +18,9 @@
 * import_dicoms.sh - storescu replaced with dcmsend
 * pg_back and pg_restore: now uses parallel implementation and directory format in order to use pg_restore.
 * BUGFIX: admin user not created during build. Fixed.
-* Java GC replaced. Settings changed. 
+* Java GC options. Settings changed. 
+* Shared memory for Postgresql as for large databases, errors are generated. 
+* Host scripts folder with optional cron jobs to run on host.
 
 ## Updates 5th October 2023
  * XNAT 1.8.9.1 default

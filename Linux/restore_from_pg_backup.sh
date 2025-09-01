@@ -17,7 +17,7 @@ echo "making a backup of current postgresql directory to /xnat-data/postgresql_b
 cp -r /xnat-data/postgresql /xnat-data/postgresql_backup
 mkdir /xnat-data/pg_backup
 
-read -p 'Copy your xnat.sql.gz file from /xnat-data/xnat/scripts/pg_backup/[date] to /xnat-data/pg_backup. Press y to continue after copying file? y/n ' cont
+read -p 'Copy your xnat.sql.gz file or xnat directory (if using dir backup) from /xnat-data/xnat/scripts/pg_backup/[date] to /xnat-data/pg_backup. Press y to continue after copying file? y/n ' cont
 if [ "$cont" != "y" ]
 then
   exit

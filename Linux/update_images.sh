@@ -25,7 +25,7 @@ echo "#########Building new docker images..."
 cd postgres
 docker build  --build-arg TIMEZONE=${timezone} -f Dockerfile -t postgres-xnat .
 cd ../nginx
-docker build -t nginx-xnat .
+docker build   --build-arg TIMEZONE=${timezone}  -t nginx-xnat .
 cd ../Linux
 
 ./restart.sh
