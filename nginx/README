@@ -4,6 +4,5 @@
 * Logrotate will reload logging (not kill nginx proc) - kill -USR1 `cat /run/nginx.pid`
 * Log files are mounted in /xnat-data/xnat/nginx_logs
 
-
 * Cron does not work well in alpine, so just use a cronjob on host. Script logrotate.sh
 * 50 00 * * * [PATH TO]/xnat-setup/nginx/logrotate.sh > [pathto]/xnat-setup/nginx-logrotate.log

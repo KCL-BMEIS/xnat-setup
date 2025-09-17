@@ -1,3 +1,4 @@
+## Please read full instructions: https://github.com/KCL-BMEIS/xnat-setup/wiki
 
 ## Updates 20th August 2025
 * update_xnat_war.sh updated to build a docker image from base instead of modifying existing container.
@@ -63,33 +64,6 @@
  * pg_backup improved, small bug fixes.
 
 
-## Quick Installation Instructions:
-
-**Fill in essential fields in xnat.cfg:**
-  * xnat_host - example, http://[ip address], or https://[ip address]
-   * psql_pwd - create a complex password for the Postgresql backend database.
-
-
-**Optional: Optimise**
- * Determine the system resources (memory, cpu cores):
-    * *lscpu* - cpus x Threads per Core = Number of CPU cores
-    * *lsmem* - total online memory
- * Visit https://pgtune.leopard.in.ua/#/. Optimise your postgresql settings for: postgresql V12, *Linux*, *Web Application*. Copy and paste into xnat.cfg.
- * You may want to increase tomcat resource, for example *Xms=1024, Xmx=4096*.
- * Edit docker-compose-stack.yml to increase the limits of each container accordingly (*xnat-web, xnat-db)
- 
-**Optional: Copy your SSL certificates into the /cert folder.**
-
-**Optional: Place plugins not listed in xnat.cfg in the /plugins directory**
-
-
-**Using docker stack:**
-
-*cd Linux && sudo ./build.sh*
-
-**With Othanc using docker stack:**
-
-*cd Linux && sudo ./build.sh test*
 
 
 

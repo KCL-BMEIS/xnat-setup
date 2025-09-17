@@ -5,5 +5,5 @@ RUN apk add tzdata
 #RUN apt-get install tzdata
 ENV TZ=$TIMEZONE
 
-RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime #&& dpkg-reconfigure -f noninteractive tzdata
 

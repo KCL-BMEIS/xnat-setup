@@ -100,7 +100,3 @@ echo "Edit docker-compose.yml: replace image xnat:latest with xnat:${xnat_versio
 echo "After editing docker-compose.yml, restart: sudo ./restart.sh"
 echo "If there are issues, revert to the previous docker image - use the image xnat:latest (or previous image if not using) and restart"
 echo "WARNING: If you updated plugins, and need to revert, change versions in xnat.cfg and rerun this script."
-
-
-
-
