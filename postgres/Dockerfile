@@ -1,8 +1,14 @@
-FROM postgres:12-alpine
+FROM postgres:16
 #neeedd to ensure host and containers have the same time
 ARG TIMEZONE
-RUN apk add tzdata
+#RUN apk add tzdata
+RUN apt-get install tzdata
 ENV TZ=$TIMEZONE
 
-RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 # not in alpine - && dpkg-reconfigure -f noninteractive tzdata
+
+# debian:
+#FROM postgres:16 - do en_US and XNAt is US?
+#RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+#ENV LANG en_US.utf8

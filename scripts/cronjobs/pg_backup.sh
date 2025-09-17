@@ -123,7 +123,7 @@ do
 		fi
 	fi
  
-	if [ $ENABLE_CUSTOM_BACKUPS = "yes" ]
+	if [ $ENABLE_CUSTOM_BACKUPS = "no" ]
 	then
 		echo "Custom backup of $DATABASE"
  
@@ -131,6 +131,17 @@ do
 			echo "[!!ERROR!!] Failed to produce custom backup database $DATABASE" 1>&2
 		else
 			mv $FINAL_BACKUP_DIR"$DATABASE".custom.in_progress $FINAL_BACKUP_DIR"$DATABASE".custom
+		fi
+	fi
+		if [ $ENABLE_DIRECTORY_FORMAT_BACKUPS = "yes" ]
+	then
+		echo "DirectoryFormat backup of $DATABASE"
+
+		if ! pg_dump -Fd -j "$CPUS_TO_USE" -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" -f  $FINAL_BACKUP_DIR"$DATABASE"; then
+			echo "[!!ERROR!!] Failed to produce directory format backup database $DATABASE" 1>&2
+		else
+		  # problem if very large!
+			tar -cvzf  "$DATABASE".tar.gz $FINAL_BACKUP_DIR"$DATABASE"
 		fi
 	fi
  

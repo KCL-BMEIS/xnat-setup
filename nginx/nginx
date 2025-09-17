@@ -1,0 +1,19 @@
+/var/log/nginx/*.log {
+	daily
+	missingok
+	rotate 52
+	dateext
+	dateformat -%Y%m%d
+	compress
+	delaycompress
+	notifempty
+	create 640 nginx adm
+	sharedscripts
+	postrotate
+		if [ -f /var/run/nginx.pid ]; then
+			# /run/nginx.pid
+			kill -USR1 `cat /run/nginx.pid`
+		fi
+	endscript
+}
+

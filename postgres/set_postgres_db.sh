@@ -17,13 +17,14 @@ PG=$(docker ps | egrep xnat-db | cut -c1-12)
 
 
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET listen_addresses='*';"
-sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET standard_conforming_strings = 'off';"
+# redundent - standard conforming strings no longer used.
+# sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET standard_conforming_strings = 'off';"
 
 
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_connections = $max_connections"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET shared_buffers = '$shared_buffers'"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET effective_cache_size = '$effective_cache_size'"
-sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET maintenance_work_mem =' $maintenance_work_mem'"
+sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET maintenance_work_mem ='$maintenance_work_mem'"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET checkpoint_completion_target = $checkpoint_completion_target"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET wal_buffers = '$wal_buffers'"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET default_statistics_target = $default_statistics_target"
@@ -36,7 +37,8 @@ sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_worker_process
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_workers_per_gather = $max_parallel_workers_per_gather"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_workers = $max_parallel_workers"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_maintenance_workers = $max_parallel_maintenance_workers"
-
+# Do NOT set huge pages on on Linux systems
+sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET huge_pages = $huge_pages"
 
 
 docker commit "$PG"  postgres-xnat

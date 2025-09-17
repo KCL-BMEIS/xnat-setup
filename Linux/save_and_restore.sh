@@ -73,7 +73,7 @@ elif [[ "$restore" = "save" ]]; then
 	#statements
 	XNAT=$(docker ps | egrep xnat-web | cut -c1-12)
 
-	echo "Saving images and storage to ./backup"
+	echo "Saving images and storage to ./backup , XNAT: $XNAT"
 	echo "Backing up pg database"
 	docker exec  "$XNAT" chmod 775 /data/scripts/clean_image.sh
 

@@ -9,10 +9,6 @@ services:
             condition: any
           placement:
             constraints: [node.role == manager]
-          resources:
-            limits:
-              cpus: '2'
-              memory: 4500M
        ports:
          - "8080:8080"
          - "8104:8104"
@@ -20,8 +16,11 @@ services:
          - xnat-db
        environment:
          - XNAT_HOME=/data/xnat/home
+       # do I need pgpass passed on? I use config file....
        secrets:
          - pgpass
+       #networks:
+         #- xnat-net
        volumes:
          # too slow 
          - @ARCHIVE_PATH@/archive:/data/xnat/archive
@@ -42,7 +41,7 @@ services:
           placement:
             constraints: [node.role == manager]
           resources:
-            limits:
+            reservations:
               cpus: '3'
               memory: 4000M
        environment:
@@ -52,9 +51,16 @@ services:
        command: postgres
        secrets:
          - pgpass
-       #LINXvolumes:
-        #LINUX - use original....
-        #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
+       #networks:
+         #- xnat-net
+       volumes:
+         # set shared memory limit when using docker compose - default 64mb, too small. Set to 1GB
+         - type: tmpfs
+           target: /dev/shm
+           tmpfs:
+             size: 1024000000
+         #LINUX - use original....
+         #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
     xnat-nginx:
        image: nginx-xnat:latest
        deploy:
@@ -85,6 +91,8 @@ services:
 #          mode: host
        depends_on:
         - xnat-web
+       #networks:
+         #- xnat-net
 
 secrets:
   pgpass:
@@ -92,3 +100,8 @@ secrets:
 
 
 
+# If a specific subnet is required:
+#networks:
+  #xnat-net:
+    #name: xnat-stack-net
+    #external: true

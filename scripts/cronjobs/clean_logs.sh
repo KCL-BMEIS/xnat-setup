@@ -8,6 +8,9 @@ find /data/xnat/cache -mindepth 1 ! -regex '^/data/xnat/cache/USERS\(/.*\)?' ! -
 find /data/xnat/build/ -type f -mtime +3 -delete
 find /data/xnat/build/* -type d -mtime +3 | xargs rm -rf
 
+find /data/xnat/archive/CONTAINER_EXEC/ -type f -mtime +30 -delete
+find /data/xnat/archive/CONTAINER_EXEC/* type d -mtime +30 | xargs rm -rf
+
 
 #find /data/xnat/archive/ -name "*.dcm" -type f -mtime +30 -delete
 #find /data/xnat/archive/ -name "*.nii" -type f -mtime +30 -delete

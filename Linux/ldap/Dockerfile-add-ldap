@@ -1,0 +1,4 @@
+FROM xnat:latest
+
+#RUN mkdir /data/xnat/home/config/auth
+ADD *-provider.properties /data/xnat/home/config/auth/
