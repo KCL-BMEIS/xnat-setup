@@ -1,4 +1,4 @@
-00 11 * * * /data/scripts/cronjobs/clean_logs.sh > /data/scripts/logs/clean_logs.log
+00 23 * * * /data/scripts/cronjobs/clean_logs.sh > /data/scripts/logs/clean_logs.log
 00 00 * * * /data/scripts/cronjobs/pg_backup.sh > /data/scripts/logs/pg_backup.log
 00 02 07 * * apt-get -y update > /data/scripts/logs/update.log
 30 02 07 * * apt-get -y upgrade >> /data/scripts/logs/update.log

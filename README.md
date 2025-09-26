@@ -1,5 +1,13 @@
 ## Please read full instructions: https://github.com/KCL-BMEIS/xnat-setup/wiki
 
+## Updates 
+* Checks whether postgresql running and password found when upgrading.
+* Updates postgresql settings in restart.sh
+* restore_from_pg_backup.sh - can restore from both plain and directory format backups.
+* update_image_war.sh - detects base images from dockerfiles.
+* Fixed pg_backup.sh to delete the files according to config file.
+
+
 ## Updates 20th August 2025
 * update_xnat_war.sh updated to build a docker image from base instead of modifying existing container.
 * docker subnet added as advanced option.

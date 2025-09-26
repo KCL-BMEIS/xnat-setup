@@ -26,7 +26,11 @@ if [ $# = 0 ]; then
         SCRIPTPATH=$(cd ${0%/*} && pwd -P)
         source $SCRIPTPATH/pg_backup.config
 fi;
- 
+
+
+
+
+
 ###########################
 #### PRE-BACKUP CHECKS ####
 ###########################
@@ -123,7 +127,7 @@ do
 		fi
 	fi
  
-	if [ $ENABLE_CUSTOM_BACKUPS = "no" ]
+	if [ $ENABLE_CUSTOM_BACKUPS = "yes" ]
 	then
 		echo "Custom backup of $DATABASE"
  
@@ -137,15 +141,52 @@ do
 	then
 		echo "DirectoryFormat backup of $DATABASE"
 
-		if ! pg_dump -Fd -j "$CPUS_TO_USE" -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" -f  $FINAL_BACKUP_DIR"$DATABASE"; then
+		if ! pg_dump -Fd -j "$CPUS_TO_USE" -h "$HOSTNAME" -U "$USERNAME" "$DATABASE" -f  $FINAL_BACKUP_DIR"$DATABASE".in_progress; then
 			echo "[!!ERROR!!] Failed to produce directory format backup database $DATABASE" 1>&2
 		else
-		  # problem if very large!
-			tar -cvzf  "$DATABASE".tar.gz $FINAL_BACKUP_DIR"$DATABASE"
+			mv $FINAL_BACKUP_DIR"$DATABASE".in_progress $FINAL_BACKUP_DIR"$DATABASE"
 		fi
 	fi
  
 done
  
 echo -e "\nAll database backups complete!"
+
+######################
+### clean backups ####
+######################
+echo -e "\nCleaning old backups:"
+
+echo "Day of week to keep: $DAY_OF_WEEK_TO_KEEP"
+echo "Days to keep: $DAYS_TO_KEEP"
+echo "Weeks to keep: $WEEKS_TO_KEEP"
+TOTAL_DAYS_TO_KEEP=$(($WEEKS_TO_KEEP*7))
+find /data/scripts/pg_backup/ -type f -mtime +$TOTAL_DAYS_TO_KEEP  -delete
+find /data/scripts/pg_backup/* type d -mtime +$TOTAL_DAYS_TO_KEEP  | xargs rm -rf
+
+# Change -ne 7 to change the day that is kept:
+# Which day to take the weekly backup from (1-7 = Monday-Sunday)
+find /data/scripts/pg_backup -mindepth 1 -type f -mtime +"$DAYS_TO_KEEP" \
+  -exec sh -c '
+    for f; do
+      # %u: day of week (1=Mon ... 7=Sun)
+      if [ "$(date -r "$f" +%u)" -ne 7 ]; then
+        echo "Removing file: rm -f $f"
+        rm -f "$f"
+      fi
+    done
+  ' sh {} +
+
+# Change -ne 7 to change the day that is kept:
+# Which day to take the weekly backup from (1-7 = Monday-Sunday)
+find /data/scripts/pg_backup -mindepth 1 -type d -empty -mtime +"$DAYS_TO_KEEP" \
+  -exec sh -c '
+    for d; do
+      if [ "$(date -r "$d" +%u)" -ne 7 ]; then
+         echo "Removing directory: rmdir $d"
+         rmdir "$d"
+      fi
+    done
+  ' sh {} +
+
 

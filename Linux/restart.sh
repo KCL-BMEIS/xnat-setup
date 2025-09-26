@@ -98,7 +98,15 @@ echo "Redeploying XNAT"
 
 docker stack deploy -c $install_dir/docker-compose.yml xnat-stack
 
-sleep 15
+sleep 30
+
+echo "############ Updating Postgresql Settings from xnat.cfg..."
+cd postgres
+  /bin/bash set_postgres_db.sh
+  rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+cd ..
+
+
 timeout 300 tail -f $xnat_home/scripts/logs/setup.log
 
 

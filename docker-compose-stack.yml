@@ -58,7 +58,7 @@ services:
          - type: tmpfs
            target: /dev/shm
            tmpfs:
-             size: 1024000000
+             size: 124000000
          #LINUX - use original....
          #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
     xnat-nginx:

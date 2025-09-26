@@ -3,8 +3,24 @@
 
 #Check dockerhib for suitable tag
 #https://hub.docker.com/_/nginx?tab=tags&page=1
-PG_VERSION="postgres:16"
-NGINX_VERSION="nginx:stable-alpine"
+#PG_VERSION="postgres:16"
+#NGINX_VERSION="nginx:stable-alpine"
+
+readarray -d " " -t strarr <<< "$(head -1 ../postgres/Dockerfile)"
+PG_VERSION="${strarr[1]//[$'\t\r\n ']}"
+readarray -d " " -t strarr <<< "$(head -1 ../nginx/dockerfile)"
+NGINX_VERSION="${strarr[1]//[$'\t\r\n ']}"
+
+echo "PG_VERSION: $PG_VERSION, NGINX_VERSION: $NGINX_VERSION"
+
+if [[ $PG_VERSION != *"postgres:"* ]]; then
+  echo "Postgres image not detected in Postgres docker files - must be in 1st line of dockerfile!"
+  exit
+fi
+if [[ $NGINX_VERSION != *"nginx:"* ]]; then
+  echo "Postgres image not detected in nginx docker files - must be in 1st line of dockerfile!"
+  exit
+fi
 
 # need to set timezone in docker images to match
 timezone=$(cat /etc/timezone)

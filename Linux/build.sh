@@ -48,8 +48,20 @@ if [ "$in_command" == "upgrade"  ] ; then
     fi
     ###get psql password
     LINE=$(docker ps | grep -E xnat-web | cut -c1-12)
+    if [ ${#LINE} -le 4 ]
+    then
+        echo "Error: Is XNAT running?  No XNAT container found. "
+        exit 1
+    fi
+
     docker exec -it "$LINE" cp /data/xnat/home/config/xnat-conf.properties /data/scripts
     psql_pwd=$(sed -n 's/^datasource.password=//p'  "$xnat_home/scripts/xnat-conf.properties")
+    if [ ${#psql_pwd} -le 4 ]
+    then
+        echo "Error: Could not find postgresql password in xnat docker container - Running?"
+        exit 1
+    fi
+
     rm -rf "$xnat_home/scripts/xnat-conf.properties"
     #echo "psql password: $psql_pwd"
     #exit

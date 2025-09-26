@@ -1,0 +1,11 @@
+FROM xnat:latest
+
+#docker build  -f ./Linux/Dockerfile-UpdateXnatSetup -t xnat:"${xnat_version}" .
+#docker build  -f ./Linux/Dockerfile-UpdateXnatSetup -t xnat:latest .
+
+RUN apt-get -yq update && apt-get -yq upgrade
+
+RUN rm /data/xnat/setup-xnat.sh
+ADD ./xnat/conf1/setup-xnat.sh /data/xnat/
+
+

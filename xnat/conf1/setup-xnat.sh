@@ -34,24 +34,32 @@ sleep 100
 
 ##### PGRESTORE ON WINDOWS! HAve to do beforehand ####
 # Using Fd -  directory backup
-if [ -d "/pg_backup" ]; then 
-		psql_pwd="$(head /run/secrets/pgpass)"
-    export PGPASSWORD="$psql_pwd"
-		for folder in /pg_backup/*
-		do
-        #		do
-        #		   sql_file=$(find "$folder" -exec stat \{} --printf="%n \n" \; | sort -n -r  | head -1)
-        #		done
-        #		if [[ $sql_file = *".sql.gz"* ]]; then
-        #		  echo "Backup database file detected. Uncompressing....$sql_file " >> /data/scripts/logs/setup.log
-        #		  gunzip -k -f $sql_file
-        #			sql_unpacked="${sql_file/.gz/}"
-        echo "Backup database directory detected. Restoring database using   $folder" >> /data/scripts/logs/setup.log
-        #psql -h xnat-db -p 5432 -U xnat  -f $sql_unpacked xnat
-        # much faster as can do in parralel, j=5 cpu
-        pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j 5 -C $folder
-			done
+backup_dir="/pg_backup/xnat"
+plain_file="/pg_backup/xnat.sql.gz"
+custom_file="/pg_backup/xnat.custom"
+if [ -f "$backup_dir/toc.dat" ]; then
 
+       echo "Backup directory-format database found:  /pg_backup/xnat"  >> /data/scripts/logs/setup.log
+
+        psql_pwd="$(head /run/secrets/pgpass)"
+       export PGPASSWORD="$psql_pwd"
+        # much faster as can do in parralel, j=5 cpu
+      pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j 5 -C /pg_backup/xnat
+      rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+
+elif [ -f "$plain_file" ]; then
+        		  echo "Backup database file xnat.sql.gz detected. Uncompressing....xnat.sql.gz " >> /data/scripts/logs/setup.log
+        		   psql_pwd="$(head /run/secrets/pgpass)"
+              export PGPASSWORD="$psql_pwd"
+        		  gunzip -k -f /pg_backup/xnat.sql.gz
+            psql -h xnat-db -p 5432 -U xnat  -f /pg_backup/xnat.sql xnat
+            rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+elif [ -f "$custom_file" ]; then
+        		  echo "Backup database file xnat.custom detected. " >> /data/scripts/logs/setup.log
+        		   psql_pwd="$(head /run/secrets/pgpass)"
+              export PGPASSWORD="$psql_pwd"
+        		  pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fc -j 5 -C /pg_backup/xnat.custom
+            rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
 fi
 
 echo 'Starting Server' >> /data/scripts/logs/setup.log
@@ -146,7 +154,7 @@ else
   curl -u admin:admin  -X PUT "http://localhost:8080/xapi/events/prefs" -H  "accept: */*" -H  "Content-Type: application/json" -d "{  \"enabled\": true}"
 
    ## configure docker if installed:
-   curl -u admin:admin  'http://localhost:8080/xapi/docker/server' -H 'Content-Type: application/json'  --data-raw '{"name":"Local socket","host":"unix:///var/run/docker.sock","cert-path":"","swarm-mode":false,"path-translation-xnat-prefix":"/data/xnat","path-translation-docker-prefix":"/xnat-data/xnat","pull-images-on-xnat-init":true,"container-user":"","auto-cleanup":true}'
+   curl -u admin:admin  'http://localhost:8080/xapi/docker/server' -H 'Content-Type: application/json'  --data-raw '{"name":"Local socket","host":"unix:///var/run/docker.sock","cert-path":"","swarm-mode":true,"path-translation-xnat-prefix":"/data/xnat","path-translation-docker-prefix":"/xnat-data/xnat","pull-images-on-xnat-init":true,"container-user":"","auto-cleanup":true}'
 
 
   echo "Disabling admin and guest users" >> /data/scripts/logs/technicalsetup.log
