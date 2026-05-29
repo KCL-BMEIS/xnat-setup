@@ -55,7 +55,7 @@ services:
          #- xnat-net
        volumes:
          # set shared memory limit when using docker compose - default 64mb, too small. Set to 1GB
-         - shm/dev/shm
+         - shm:/dev/shm
          #LINUX - use original....
          #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
     xnat-nginx:
@@ -110,4 +110,4 @@ volumes:
     driver_opts:
       type: tmpfs
       device: tmpfs
-      o: "size=4g,mode=1777"
+      o: "size=1g,mode=1777"
