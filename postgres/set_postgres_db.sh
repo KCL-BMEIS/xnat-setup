@@ -39,6 +39,8 @@ sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_worke
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_maintenance_workers = $max_parallel_maintenance_workers"
 # Do NOT set huge pages on on Linux systems
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET huge_pages = $huge_pages"
+sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET jit = $jit"
+sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET wal_compression = $wal_compression"
 
 
 docker commit "$PG"  postgres-xnat
