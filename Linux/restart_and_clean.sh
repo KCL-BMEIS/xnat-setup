@@ -12,6 +12,10 @@ cd $linux_dir
 cd ..
 install_dir=$(pwd)
 source $install_dir/xnat.cfg
+xnat_home="$xnat_data/xnat"
+postgres_path="$xnat_data/postgresql"
+import_data_folder="$xnat_data/import_data"
+
 docker stack rm xnat-stack
 
 

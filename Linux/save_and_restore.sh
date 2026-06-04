@@ -4,34 +4,25 @@ cd $linux_dir
 cd ..
 install_dir=$(pwd)
 source $install_dir/xnat.cfg
+xnat_home="$xnat_data/xnat"
+postgres_path="$xnat_data/postgresql"
 
-#in order to save images and files, then restore on another ocmputer.
-# in xnat.cfg, use the ip address of the intended PC
 
-#INSTRUCTIONS:
-#Setup a PC with public access follwoing the instrucitons int he wiki. 
-# Fill int he xnat.cfg file, but ensure you use the IP address of the intended host.
-#After runing ./build.sh use this script:
+#INSTRUCTION for building on one server and transferring to another:
+# Setup a PC with public access following the instructions on the wiki.
+# Fill in the xnat.cfg file, but ensure you use the url of the intended host.
+# In order to work with Linux, the postgresql folder cannot be mounted - before starting you must edit some files. Only do this on the old server.
+# docker-compose.yml:
+#         delete lines:
+#              #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
+# After running ./build.sh use this script:
 #    ./save_and_restore.sh save
-#This will create a backup directroy. 
-# Copy he backup to ./uploader/ folder of the new computer and run:
+# This will create a backup directory.
+# Copy the backup directory to /path/to/xnat-setup/Linux on your new server. Copy the xnat.cfg over.
+# Run:
 #    ./save_and_restore.sh restore
 
-## In order to work with Linux, the postgresql fodler cannot be mounted - before starting you must edit spome files:
 
-# docker-compose-template:
-#         line 27, 71 - remove #WIN#, so /pg_backup will be mounted:
-#              ./volume/postgres-data1:/pg_backup
-#              ./volume/postgres-data2:/pg_backup
-#         delete lines 95,50:
-#              LINX- ./volume/postgres-data1:/var/lib/postgresql/data
-#              LINX- ./volume/postgres-data2:/var/lib/postgresql/data
-# ./xnat/templates/cronjoobs.txt:
-#        delete #WIN# - this way, the postgresql will backup to the new mounted folder
-
-
-xnat_home_out="/xnat-data/xnat"
-postgres_path_out="/xnat-data/postgresql"
 
 
 restore=$1
@@ -42,7 +33,7 @@ then
 	echo "Restoring images and storage from ./backup"
 	if [ ! -d "./backup" ]
     then
-        echo "There is no backup subfolder in the crrent directory."
+        echo "There is no backup subfolder in the current directory."
         exit 1
 	fi
 	docker stack rm xnat-stack
@@ -54,20 +45,19 @@ then
   docker load -i xnat.tar.gz
   cd ..
   mkdir /xnat-data
-  rm -rf $xnat_home_out
-  mkdir $xnat_home_out
-  tar -C $xnat_home_out -xzf  ./backup/xnat_home.tar.gz
+  rm -rf $xnat_home
+  mkdir $xnat_home
+  tar -C $xnat_home -xzf  ./backup/xnat_home.tar.gz
 
-  rm -rf $postgres_path_out
-  mkdir $postgres_path_out
-  tar -C $postgres_path_out -xzf  ./backup/postgres_path.tar.gz
+  rm -rf $postgres_path
+  mkdir $postgres_path
+  tar -C $postgres_path -xzf  ./backup/postgres_path.tar.gz
 
 
 	docker stack deploy -c docker-compose.yml xnat-stack
 	cd Linux
+	echo "If XNAT does not start, check that the correct xnat image is being used in docker-compose.yml - xnat:latest"
     
-
-
 
 elif [[ "$restore" = "save" ]]; then
 	#statements

@@ -145,11 +145,24 @@ else
   ]' 'http://localhost:8080/xapi/users/'"$xnat_admin_user"'/roles'  >> /data/scripts/logs/technicalsetup.log
 
 
+
+
+
   echo "Installing Config File" >> /data/scripts/logs/technicalsetup.log
   #### INSTALL SITECONFIG
   settings="$(cat /data/xnat/home/siteConfig.txt)"
   curl -u admin:admin  -X POST --header 'Content-Type: application/json' --header 'Accept: */*' -d "$settings"  'http://localhost:8080/xapi/siteConfig' >> /data/scripts/logs/technicalsetup.log
 
+
+
+
+  echo "Configuring DICOM reciever" >> /data/scripts/logs/technicalsetup.log
+curl -u admin:admin -X PUT \
+  -H 'Content-Type: application/json' \
+  --data-raw '{"id":1,"aeTitle":"XNAT","port":8104,"enabled":true,"customProcessing":false,"directArchive":false,"directArchiveOverwrite":false,"identifier":"dicomObjectIdentifier","anonymizationEnabled":false,"whitelistEnabled":false,"whitelistText":"","routingExpressionsEnabled":false,"projectRoutingExpression":"","subjectRoutingExpression":"","sessionRoutingExpression":""}' 'http://localhost:8080/xapi/dicomscp/1/' >> /data/scripts/logs/technicalsetup.log
+
+
+  echo "ConfiguringDocker service and Event service" >> /data/scripts/logs/technicalsetup.log
   #enable event service:
   curl -u admin:admin  -X PUT "http://localhost:8080/xapi/events/prefs" -H  "accept: */*" -H  "Content-Type: application/json" -d "{  \"enabled\": true}"
 

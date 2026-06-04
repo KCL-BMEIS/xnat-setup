@@ -11,11 +11,9 @@ then
         exit 1
 fi
 
-
-
 dos2unix $install_dir/xnat.cfg
 source $install_dir/xnat.cfg
-
+xnat_home="$xnat_data/xnat"
 
 XNAT=$(docker ps | egrep xnat-web | cut -c1-12)
 

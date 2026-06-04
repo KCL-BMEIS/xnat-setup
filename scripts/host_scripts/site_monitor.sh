@@ -2,6 +2,14 @@
 # A script to monitor uptime of websites,
 # and notify by email if a website is down.
 
+# only run if docker not running
+LINE=$(docker stack ls | egrep xnat-stack | cut -c1-12)
+echo "$LINE"
+if [ -z "${LINE}" ]; then
+  echo "Docker stack not running, exiting"
+  exit 1
+fi
+
 
 SITES=""
 EMAILS=""

@@ -15,7 +15,7 @@ sleep 60
 
 echo "making a backup of current postgresql directory to /xnat-data/postgresql_backup"
 if [ -d "/xnat-data/postgresql_backup" ]; then
-        read -p 'Backup copy of the databse already exists- /xnat-data/postgresql_backu. Do you wish to Continue? y/n ' cont
+        read -p 'Backup copy of the database already exists- /xnat-data/postgresql_backup. Do you wish to Continue? y/n ' cont
       if [ "$cont" != "y" ]
       then
         exit
@@ -61,7 +61,7 @@ sed -i  "s|#WINX- ./volume/postgres-data|- /xnat-data/pg_backup|g"  ../docker-co
 echo "##############################"
 echo "Do NOT stop the script early. Allow XNAT to restart fully and this script to finish."
 echo "##############################"
-echo "no" | ./restart.sh
+echo "n" | ./restart.sh
 
 #comment out so if restarting does not replace current XNAT
 sed -i  "s|- /xnat-data/pg_backup|#WINX- ./volume/postgres-data|g"  ../docker-compose.yml

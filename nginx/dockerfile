@@ -19,7 +19,3 @@ RUN chmod -R 600 /etc/nginx/
 RUN chmod 600 /etc/logrotate.d/*
 
 
-EXPOSE 444
-EXPOSE 443
-EXPOSE 80
-EXPOSE 8082

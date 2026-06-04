@@ -1,4 +1,5 @@
-FROM xnat:latest
+ARG OLD_XNAT_VERSION="xnat:latest"
+FROM ${OLD_XNAT_VERSION}
 
 # Use update_xnat_war.sh - it will use this file to build a new docker image.
 # docker build --build-arg XNAT_V="$XNAT_VER" -f Dockerfile-UpdateWar -t xnat:"$XNAT_VER" .

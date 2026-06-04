@@ -1,4 +1,6 @@
-FROM xnat:latest
+ARG XNAT_VERSION
+
+FROM xnat:${XNAT_VERSION}
 
 #docker build  -f ./Linux/Dockerfile-UpdateXnatSetup -t xnat:"${xnat_version}" .
 #docker build  -f ./Linux/Dockerfile-UpdateXnatSetup -t xnat:latest .

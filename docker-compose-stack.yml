@@ -10,26 +10,23 @@ services:
           placement:
             constraints: [node.role == manager]
        ports:
-         - "8080:8080"
+         #- "8080:8080"
          - "8104:8104"
        depends_on:
          - xnat-db
        environment:
          - XNAT_HOME=/data/xnat/home
-       # do I need pgpass passed on? I use config file....
        secrets:
          - pgpass
        #networks:
          #- xnat-net
        volumes:
-         # too slow 
          - @ARCHIVE_PATH@/archive:/data/xnat/archive
          - @XNAT_HOME@/build:/data/xnat/build
          - @XNAT_HOME@/tomcat_logs:/data/xnat/home/logs
          - @XNAT_HOME@/scripts:/data/scripts
          - @XNAT_HOME@/inbox:/data/xnat/inbox
          #LINX- /var/run/docker.sock:/var/run/docker.sock
-         #WINX- //var/run/docker.sock://var/run/docker.sock
          - @IMPORT_DATA_FOLDER@:/data/import_data
          #WINX- ./volume/postgres-data:/pg_backup
     xnat-db:
@@ -55,8 +52,7 @@ services:
          #- xnat-net
        volumes:
          # set shared memory limit when using docker compose - default 64mb, too small. Set to 1GB
-         - shm:/dev/shm
-         #LINUX - use original....
+         - shm:/dev/shm # mount the tmpfs-backed volume here
          #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
     xnat-nginx:
        image: nginx-xnat:latest
@@ -74,7 +70,6 @@ services:
         - @XNAT_HOME@/certificates:/etc/ssl
         - @XNAT_HOME@/nginx_logs:/var/log/nginx
         #LINX- /var/run/docker.sock:/var/run/docker.sock:ro
-        #WINX- //var/run/docker.sock://var/run/docker.sock:ro
        ports:
         - "80:80"
         - "443:443"
@@ -96,14 +91,6 @@ secrets:
      external: true
 
 
-
-# If a specific subnet is required:
-#networks:
-  #xnat-net:
-    #name: xnat-stack-net
-    #external: true
-
-    
 volumes:
   shm:
     driver: local
@@ -111,3 +98,10 @@ volumes:
       type: tmpfs
       device: tmpfs
       o: "size=1g,mode=1777"
+
+
+# If a specific subnet is required:
+#networks:
+  #xnat-net:
+    #name: xnat-stack-net
+    #external: true

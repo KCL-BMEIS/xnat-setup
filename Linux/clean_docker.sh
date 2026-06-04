@@ -12,6 +12,9 @@ cd ..
 install_dir=$(pwd)
 cd $install_dir
 source $install_dir/xnat.cfg
+xnat_home="$xnat_data/xnat"
+postgres_path="$xnat_data/postgresql"
+import_data_folder="$xnat_data/import_data"
 
 
 docker stack rm xnat-stack
@@ -34,7 +37,6 @@ docker rmi $(docker images -a -q)
 test=$1
 if [ "$test" != "test" ]
 then
-    rm -rf $storage_path
-    rm -rf $import_data_folder
+    rm -rf $xnat_data
 fi
 cd Linux
