@@ -1,10 +1,14 @@
 * Uses debian image. More stable than alpine. However, alpine image available for upgrading (do not upgrade from alpine -> debian)
-* For Linux, huge pages should be set to 'off'
 
 * Had to increase shm size from default docker 64mb to 512.
-*     tmpfs:
-      - /dev/shm:size=1g
-* NOTE: shm_size: does not work for swarm
+* volumes:
+  shm:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: "size=1g,mode=1777"
+
 * Log into postgresql container to verify:
 * cat /proc/mounts | grep shm
-
+* added pg_maintenace to run in container. Skips two huge tables. I had a problem but this shoud be fine for quick cleanups. 

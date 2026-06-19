@@ -49,8 +49,12 @@ sleep 30
 
 echo "############ Updating Postgresql Settings from xnat.cfg..."
 cd postgres
-  /bin/bash set_postgres_db.sh
-  rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+    /bin/bash set_postgres_db.sh
+    rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+
+    PG=$(docker ps | egrep xnat-db | cut -c1-12)
+    docker exec -it "$PG" /bin/bash -c "pg_maintenance.sh "
+
 cd ..
 
 

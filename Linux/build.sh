@@ -66,7 +66,7 @@ if [ "${in_command,,}" == "upgrade"  ] ; then
 elif [  "${in_command,,}"  == "ci" ]; then
    echo "Building XNAT - CI"
 else
-  read -p  "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
+  read -p  "Building XNAT. This will build the docker containers and interrupt existing containers. Do you wish to Continue? y/n " cont
       if [ "$cont" != "y" ]
     then
       exit
@@ -292,8 +292,6 @@ sed -i "s#@PIPELINE_URL@#$URL#g" ./xnat/conf1/siteConfig.txt
 sed -i "s#@SITEURL@#$URL#g" ./xnat/conf1/siteConfig.txt
 sed -i "s/@ADMIN_EMAIL@/$xnat_admin_email/g" ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
 sed -i "s/@PROJECT@/$site_name/g"  ./xnat/conf1/siteConfig.txt
-#remove dbnum, not needed
-sed -i "s/@DB_NUM@/1/g"  ./xnat/conf1/xnat-conf.properties
 sed -i "s/@PG_USR@/$psql_user/g"  ./xnat/conf1/xnat-conf.properties
 sed -i "s/@PG_PWD@/$psql_pwd/g"  ./xnat/conf1/xnat-conf.properties
 sed -i  "s/@SITE@/$site_name/g"    ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
@@ -321,6 +319,24 @@ sed -i  "s/@TRUST@/$ssl_trust_file/g"  "$NGINX_CONF"
 
 if [  "${in_command,,}"  != "upgrade" ]
 then
+      # set docker subnet
+      if [ ${#docker_subnet} -ge 6 ]
+      then
+        docker network create --driver overlay --subnet $docker_subnet  xnat-stack-net
+        sed -i "s/#networks:/networks:/g"   "$DOCKER_FILE"
+        sed -i "s/#xnat-net:/xnat-net:/g"   "$DOCKER_FILE"
+        sed -i "s/#- xnat-net/- xnat-net/g"   "$DOCKER_FILE"
+         sed -i "s/#name: xnat-stack-net/name: xnat-stack-net/g"   "$DOCKER_FILE"
+         sed -i "s/#external: true/external: true/g"   "$DOCKER_FILE"
+      fi
+
+        if [  "$ssl" = true  ]
+        then
+          # skip if upgrading s already in place
+            cp ./certs/* $xnat_home/certificates/
+        fi
+
+
       # Create secrets....
       #POSTGRESQL
       #echo "$psql_pwd" > pgapss
@@ -343,26 +359,7 @@ sed -i  "s#@PWD@#$install_dir#g"   "$DOCKER_FILE"
 sed -i  "s#@XNAT_HOME@#$xnat_home#g"   "$DOCKER_FILE"
 sed -i  "s#@POSTGRES_PATH@#$postgres_path#g"   "$DOCKER_FILE"
 sed -i  "s#@IMPORT_DATA_FOLDER@#$import_data_folder#g"   "$DOCKER_FILE"
-sed -i "s/@PG_PWD@/$psql_pwd/g"   "$DOCKER_FILE"
 sed -i "s/@PG_USER@/$psql_user/g"   "$DOCKER_FILE"
-# set docker subnet
-if [ ${#docker_subnet} -ge 6 ]
-then
-  docker network create --driver overlay --subnet $docker_subnet  xnat-stack-net
-  sed -i "s/#networks:/networks:/g"   "$DOCKER_FILE"
-  sed -i "s/#xnat-net:/xnat-net:/g"   "$DOCKER_FILE"
-  sed -i "s/#- xnat-net/- xnat-net/g"   "$DOCKER_FILE"
-   sed -i "s/#name: xnat-stack-net/name: xnat-stack-net/g"   "$DOCKER_FILE"
-   sed -i "s/#external: true/external: true/g"   "$DOCKER_FILE"
-fi
-
-
-
-if [  "$ssl" = true ]
-then
-    cp ./certs/* $xnat_home/certificates/
-fi
-
 
 
 #### SET PROXY
@@ -385,12 +382,12 @@ then
     
     rm -rf  ./xnat_proxy
     cp -R ./xnat ./xnat_proxy
-    sed -i  "s\#ENV \ENV \g"   ./xnat_proxy/Dockerfile
-    sed -i "s#@PROXYURL@#$proxy_url#g"   ./xnat_proxy/Dockerfile
-    sed -i "s#@PROXYPORT@#$proxy_port#g"   ./xnat_proxy/Dockerfile
-    sed -i  "s\@JAVA_PROXY@\ $JAVA_PROXY \g"   ./xnat_proxy/Dockerfile
-    sed -i  "s\#RUN su - \RUN su -  \g"   ./xnat_proxy/Dockerfile
-     sed -i "s#@URLNAME@#$url_name#g"   ./xnat_proxy/Dockerfile
+    sed -i  "s\#ENV \ENV \g"   ./xnat_proxy/dockerfile
+    sed -i "s#@PROXYURL@#$proxy_url#g"   ./xnat_proxy/dockerfile
+    sed -i "s#@PROXYPORT@#$proxy_port#g"   ./xnat_proxy/dockerfile
+    sed -i  "s\@JAVA_PROXY@\ $JAVA_PROXY \g"   ./xnat_proxy/dockerfile
+    sed -i  "s\#RUN su - \RUN su -  \g"   ./xnat_proxy/dockerfile
+     sed -i "s#@URLNAME@#$url_name#g"   ./xnat_proxy/dockerfile
 
     
     # bash rpofile
@@ -418,7 +415,7 @@ fi
 # DOCKER_BUILDKIT=1  ? makes faster
 echo "############### Building Docker Images, XNAT version: $xnat_version   timezone: $timezone"
 
-docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -f Dockerfile -t xnat:"${xnat_version}"  .
+docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -t xnat:"${xnat_version}"  .
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 # set version of xnat image in docker-compose
@@ -429,7 +426,13 @@ docker build   --build-arg TIMEZONE=${timezone} -t nginx-xnat .
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 cd postgres
-docker build  --build-arg TIMEZONE=${timezone} -f Dockerfile -t postgres-xnat .
+if [ "$use_pg_alpine" == true ]
+then
+  docker build  --build-arg TIMEZONE=${timezone} -f dockerfile-alpine -t postgres-xnat .
+else
+  docker build  --build-arg TIMEZONE=${timezone} -t postgres-xnat .
+fi
+
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 
@@ -441,7 +444,7 @@ warning_messages="$(/bin/bash download_plugins.sh)"
 cp  ../plugins/*.jar  "$xnat_home/scripts/plugins"
 cd ..
 
-
+echo "############ Ignore error if node already part of swarm...."
 docker swarm init
 
 echo "############ Deploying XNAT Docker Stack..."

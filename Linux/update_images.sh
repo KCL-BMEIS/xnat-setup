@@ -3,12 +3,27 @@
 
 #Check dockerhib for suitable tag
 #https://hub.docker.com/_/nginx?tab=tags&page=1
-#PG_VERSION="postgres:16"
-#NGINX_VERSION="nginx:stable-alpine"
+# edit the Dockerfiles to set new base images
 
-readarray -d " " -t strarr <<< "$(head -1 ../postgres/Dockerfile)"
+
+linux_dir=$(dirname "$0")
+cd $linux_dir
+cd ..
+
+install_dir=$(pwd)
+dos2unix "$install_dir/xnat.cfg"
+source "$install_dir/xnat.cfg"
+
+
+if [ "$use_pg_alpine" == true ]
+then
+  readarray -d " " -t strarr <<< "$(head -1 ./postgres/dockerfile-alpine)"
+else
+  readarray -d " " -t strarr <<< "$(head -1 ./postgres/dockerfile)"
+fi
+
 PG_VERSION="${strarr[1]//[$'\t\r\n ']}"
-readarray -d " " -t strarr <<< "$(head -1 ../nginx/dockerfile)"
+readarray -d " " -t strarr <<< "$(head -1 ./nginx/dockerfile)"
 NGINX_VERSION="${strarr[1]//[$'\t\r\n ']}"
 
 echo "PG_VERSION: $PG_VERSION, NGINX_VERSION: $NGINX_VERSION"
@@ -28,10 +43,6 @@ echo "Timezone: $timezone"
 
 
 
-linux_dir=$(dirname "$0")
-cd $linux_dir
-cd ..
-install_dir=$(pwd)
 
 echo "#######Pulling new docker images..."
 docker pull "$PG_VERSION"
@@ -39,7 +50,13 @@ docker pull "$NGINX_VERSION"
 
 echo "#########Building new docker images..."
 cd postgres
-docker build  --build-arg TIMEZONE=${timezone} -f Dockerfile -t postgres-xnat .
+if [ "$use_pg_alpine" == true ]
+then
+  docker build  --build-arg TIMEZONE=${timezone} -f dockerfile-alpine -t postgres-xnat .
+else
+  docker build  --build-arg TIMEZONE=${timezone} -t postgres-xnat .
+fi
+
 cd ../nginx
 docker build   --build-arg TIMEZONE=${timezone}  -t nginx-xnat .
 cd ../Linux
@@ -48,13 +65,6 @@ cd ../Linux
 #apt update and upgrade run in xnat-web when restarted.
 
 
-cd ..
-
-sleep 100
-echo "######Changing Postgresql Settings..."
-cd postgres
-  /bin/bash set_postgres_db.sh
-  rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 
 XNAT1=$(docker ps | egrep xnat-web | cut -c1-12)

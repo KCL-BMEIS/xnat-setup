@@ -8,7 +8,7 @@ ENV TZ=$TIMEZONE
 
 # logrotate to update nginx log files, openrc as cron required and needs openrc to start it
 # openrc - run on host instead as cronjob. See logrotate.sh
-RUN apk update && apk upgrade && apk add  --no-cache tzdata logrotate
+RUN apk upgrade --no-cache && apk add  --no-cache tzdata logrotate
 
 RUN rm -v /etc/nginx/nginx.conf
 RUN rm /etc/nginx/conf.d/*

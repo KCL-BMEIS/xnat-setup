@@ -44,7 +44,7 @@ if [ -f "$backup_dir/toc.dat" ]; then
         psql_pwd="$(head /run/secrets/pgpass)"
        export PGPASSWORD="$psql_pwd"
         # much faster as can do in parralel, j=5 cpu
-      pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j 5 -C /pg_backup/xnat
+      pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j "${cpu_cores}" -C /pg_backup/xnat
       rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
 
 elif [ -f "$plain_file" ]; then
@@ -58,7 +58,7 @@ elif [ -f "$custom_file" ]; then
         		  echo "Backup database file xnat.custom detected. " >> /data/scripts/logs/setup.log
         		   psql_pwd="$(head /run/secrets/pgpass)"
               export PGPASSWORD="$psql_pwd"
-        		  pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fc -j 5 -C /pg_backup/xnat.custom
+        		  pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fc -j "${cpu_cores}"  -C /pg_backup/xnat.custom
             rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
 fi
 
@@ -67,6 +67,9 @@ echo 'Starting Server' >> /data/scripts/logs/setup.log
 #/usr/local/tomcat/bin/catalina.sh run &
 #/data/xnat/run_tomcat.sh &
 
+# spring clean - sawfe to delete work when XNAT not running
+rm -rf /data/xnat/home/work
+mkdir -p /data/xnat/home/work
 
 echo 'Starting cron' >> /data/scripts/logs/setup.log
 mkdir /data/scripts/access_logs
@@ -157,7 +160,7 @@ else
 
 
   echo "Configuring DICOM reciever" >> /data/scripts/logs/technicalsetup.log
-curl -u admin:admin -X PUT \
+  curl -u admin:admin -X PUT \
   -H 'Content-Type: application/json' \
   --data-raw '{"id":1,"aeTitle":"XNAT","port":8104,"enabled":true,"customProcessing":false,"directArchive":false,"directArchiveOverwrite":false,"identifier":"dicomObjectIdentifier","anonymizationEnabled":false,"whitelistEnabled":false,"whitelistText":"","routingExpressionsEnabled":false,"projectRoutingExpression":"","subjectRoutingExpression":"","sessionRoutingExpression":""}' 'http://localhost:8080/xapi/dicomscp/1/' >> /data/scripts/logs/technicalsetup.log
 
@@ -175,8 +178,6 @@ curl -u admin:admin -X PUT \
   curl -u admin:admin -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://localhost:8080/xapi/users/guest/enabled/false' >> /data/scripts/logs/technicalsetup.log
   #cannot set password, well not easily.
   #curl -u $xnat_admin_user:$xnat_admin_pwd -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://localhost:8080/xapi/users/admin/enabled/false' >> /data/scripts/logs/technicalsetup.log
-
-
 
 fi
 

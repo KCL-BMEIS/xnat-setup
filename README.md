@@ -7,6 +7,8 @@
 * garbage collector changed , with G1GC, and EnableJVMCI
 * Only works with XNAT 1.10+
 * Various code improvements.
+* pg_maintenence script added to postgresql image.
+* added postgresql:alpine as option in 
 
 
 ## Updates 1 october 2025
