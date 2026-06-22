@@ -228,6 +228,12 @@ if [  "${in_command,,}"  != "upgrade" ]; then
     mkdir -p "$xnat_home/scripts/plugins"
 fi
 
+if [ ! -d "$xnat_home/inbox" ]
+then
+  # some old installs did not have, so required when upgrading
+  mkdir -p "$xnat_home/inbox/"
+fi
+
 if [ -d "$xnat_home/archive" ]
 then
     echo "Success: xnat archive $xnat_home/archive created"
@@ -428,6 +434,7 @@ cd ..
 cd postgres
 if [ "$use_pg_alpine" == true ]
 then
+  echo "## us_pg_alpine set to true: Using postresql alpine image"
   docker build  --build-arg TIMEZONE=${timezone} -f dockerfile-alpine -t postgres-xnat .
 else
   docker build  --build-arg TIMEZONE=${timezone} -t postgres-xnat .
