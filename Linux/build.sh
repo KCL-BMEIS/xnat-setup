@@ -58,10 +58,10 @@ if [ "${in_command,,}" == "upgrade"  ] ; then
     fi
 
     # remove properties file once extracted pwd
-    rm -f "$xnat_home/scripts/xnat-conf.properties"
+    rm  $xnat_home/scripts/xnat-conf.properties
 
     # remove existing plugins if upgrading
-    rm -f "$xnat_home/scripts/plugins/*.jar"
+    rm $xnat_home/scripts/plugins/*
 
 elif [  "${in_command,,}"  == "ci" ]; then
    echo "Building XNAT - CI"
@@ -277,7 +277,8 @@ cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.propert
 #-XX:+UnlockExperimentalVMOptions \\
 #-XX:+DisableExplicitGC \\
 
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+# -DDOCKER_TLS_VERIFY=1 Need tls if connecting to docker container service using certifcates
+echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1 -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
 
 echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
 
@@ -286,6 +287,7 @@ echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:
 
 ### in Linux, only CATALINA important as runs first
 echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" >> ./xnat/conf1/setenv.sh
+
 
 
 

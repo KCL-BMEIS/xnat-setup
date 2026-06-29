@@ -9,7 +9,7 @@ apt-get -yq upgrade
 
 
 DB_NAME="xnat"
-TABLES_TO_SKIP="('xdat_change_info', 'wrk_workflowdata_meta_data')"
+TABLES_TO_SKIP="()" # do not skip any, as delete orphan rows - 'xdat_change_info', 'wrk_workflowdata_meta_data')"
 
 
 # Query all tables, filter out the skipped ones, and run reindexdb for each

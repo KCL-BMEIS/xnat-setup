@@ -6,9 +6,10 @@
 * Uses tomcat:9-jdk21-temurin-noble base image for XNAT
 * garbage collector changed , with G1GC, and EnableJVMCI
 * Only works with XNAT 1.10+
-* Various code improvements.
+* Many code improvements.
 * pg_maintenence script added to postgresql image.
-* added postgresql:alpine as option in 
+* added postgresql:alpine as option in xnat.cfg.
+*  -DDOCKER_TLS_VERIFY=1 added as default to tomcat setenv.sh to connect to container service using certificates.
 
 
 ## Updates 1 october 2025
