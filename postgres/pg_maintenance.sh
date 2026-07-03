@@ -9,13 +9,16 @@ apt-get -yq upgrade
 
 
 DB_NAME="xnat"
-TABLES_TO_SKIP="()" # do not skip any, as delete orphan rows - 'xdat_change_info', 'wrk_workflowdata_meta_data')"
+# enable if you wish to skip
+TABLES_TO_SKIP="('xdat_change_info', 'wrk_workflowdata_meta_data')"
 
 
 # Query all tables, filter out the skipped ones, and run reindexdb for each
 echo "Reindexing database..."
-psql -U xnat -d "$DB_NAME" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT IN $TABLES_TO_SKIP" | while read TABLE; do
-  #
+# swap lines if filtering:
+# psql -U xnat -d "$DB_NAME" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT IN $TABLES_TO_SKIP" | while read TABLE; do
+psql -U xnat -d "$DB_NAME" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'public'" | while read TABLE; do
+
   reindexdb  -U xnat   --concurrently  -t "$TABLE" "$DB_NAME"
 done
 

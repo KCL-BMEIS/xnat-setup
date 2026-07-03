@@ -9,7 +9,8 @@
 * Many code improvements.
 * pg_maintenence script added to postgresql image.
 * added postgresql:alpine as option in xnat.cfg.
-*  -DDOCKER_TLS_VERIFY=1 added as default to tomcat setenv.sh to connect to container service using certificates.
+* docker_tls in xnat.cfg, adds -DDOCKER_TLS_VERIFY=1 tomcat setenv.sh to connect to container service using SSL certificates.
+* postgresql-client upgraded to v17 for easier upgrading of Postgresql.
 
 
 ## Updates 1 october 2025

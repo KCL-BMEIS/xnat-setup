@@ -1,9 +1,12 @@
-ARG XNAT_VERSION
+# If you make changes to /xnat/conf1/xnat-setup.sh, run this to install the new script:
+# docker build  --build-arg XNAT_IMAGE="$XNAT_VERSION"  -f Dockerfile-UpdateXnatSetup -t XNAT_IMAGE" .
+# example:
+# docker build  --build-arg XNAT_IMAGE=xnat:1.10.0  -f Dockerfile-UpdateXnatSetup -t xnat:1.10.0 .
+# You can change the output image, then edit docker-compose.yml to use it, for example -t xnat:1.10.0v2
+# then ./restart.sh
 
-FROM xnat:${XNAT_VERSION}
-
-#docker build  -f ./Linux/Dockerfile-UpdateXnatSetup -t xnat:"${xnat_version}" .
-#docker build  -f ./Linux/Dockerfile-UpdateXnatSetup -t xnat:latest .
+ARG XNAT_IMAGE=xnat:1.10.0
+FROM $XNAT_IMAGE
 
 RUN apt-get -yq update && apt-get -yq upgrade
 

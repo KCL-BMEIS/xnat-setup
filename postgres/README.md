@@ -12,3 +12,7 @@
 * Log into postgresql container to verify:
 * cat /proc/mounts | grep shm
 * added pg_maintenace to run in container. Skips two huge tables. I had a problem but this shoud be fine for quick cleanups. 
+
+* to skip specific tables for reindexing, edit pg_maintenance.sh (uncomment out psql line, comment out default) and rebuild postgresql image. 
+
+If using a fresh Install, change to 'FROM postgres:17' in dockerfile if you wish.

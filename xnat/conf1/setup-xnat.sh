@@ -48,7 +48,7 @@ if [ -f "$backup_dir/toc.dat" ]; then
       rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
 
 elif [ -f "$plain_file" ]; then
-        		  echo "Backup database file xnat.sql.gz detected. Uncompressing....xnat.sql.gz " >> /data/scripts/logs/setup.log
+        		  echo "Backup database file xnat.sql.gz detected. Uncompressing and restoring....xnat.sql.gz " >> /data/scripts/logs/setup.log
         		   psql_pwd="$(head /run/secrets/pgpass)"
               export PGPASSWORD="$psql_pwd"
         		  gunzip -k -f /pg_backup/xnat.sql.gz

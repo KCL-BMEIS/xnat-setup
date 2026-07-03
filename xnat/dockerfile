@@ -25,7 +25,11 @@ ARG TOMCAT_XNAT_FOLDER_PATH=${CATALINA_HOME}/webapps/${TOMCAT_XNAT_FOLDER}
 # Fix sh and install dependencies
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN export DEBIAN_FRONTEND=noninteractive && export TZ=${TZ}  \
-    && apt-get -yq update && apt-get -yq install dcmtk dos2unix mc cron curl python3 python3-pip zip jq  postgresql-client-16 tzdata
+    && apt-get -yq update && apt-get -yq install dcmtk dos2unix mc cron curl python3 python3-pip zip jq   tzdata postgresql-common
+
+# require postgresql-common to automatically configure postgresql repositories
+RUN  echo 0 | /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+RUN apt-get -yq update && apt-get -yq install postgresql-client-17
 
 # sets timezone so matches host
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && dpkg-reconfigure -f noninteractive tzdata

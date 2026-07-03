@@ -278,8 +278,12 @@ cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.propert
 #-XX:+DisableExplicitGC \\
 
 # -DDOCKER_TLS_VERIFY=1 Need tls if connecting to docker container service using certifcates
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1 -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+if [ "$docker_tls" = true ]; then
+  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1 -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
 
+else
+  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+fi
 echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
 
 # mentions when startig tomcat: EXPERIMENTAL - only works if experimental unlocked

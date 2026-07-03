@@ -15,7 +15,7 @@ sleep 60
 
 echo "making a backup of current postgresql directory to /xnat-data/postgresql_backup"
 if [ -d "/xnat-data/postgresql_backup" ]; then
-        read -p 'Backup copy of the database already exists- /xnat-data/postgresql_backup. Do you wish to Continue? y/n ' cont
+        read -p 'Backup copy of the database already exists- /xnat-data/postgresql_backup. Overwrite and Continue? y/n ' cont
       if [ "$cont" != "y" ]
       then
         exit
