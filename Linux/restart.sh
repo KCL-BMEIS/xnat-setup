@@ -16,9 +16,12 @@ cd $install_dir
 xnat_home="$xnat_data/xnat"
 postgres_path="$xnat_data/postgresql"
 
+if docker stack ls --format '{{.Name}}' | grep -qx 'xnat-stack'; then
+  echo "XNAT running. Shutting down XNAT Stack. Please wait."
+  docker stack rm xnat-stack
+  sleep 60
+fi
 
-docker stack rm xnat-stack
-echo "Shutting down XNAT Stack. Please wait."
 
 
 if [ "$option" == "CI" ]; then
@@ -56,10 +59,7 @@ cd postgres
     docker exec -it "$PG" /bin/bash -c "pg_maintenance.sh "
 
 cd ..
-
-
 timeout 300 tail -f $xnat_home/scripts/logs/setup.log
-
 
 
 

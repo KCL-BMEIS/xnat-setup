@@ -171,7 +171,7 @@ elif [[ "$restore" = "save" ]]; then
  echo "-----------------------------------------"
 	echo "######## Backing up mounted directories"
 
-    read -p  "Tar archiving /xnat-data/xnat - do you wish to backup the entire archive too? (if large, you will want to skip this) ? y/n " cont
+    read -p  "Tar archiving $xnat_data/xnat - do you wish to backup the entire archive too? (if large, you will want to skip this) ? y/n " cont
       if [ "$cont" != "y" ]
     then
       tar -zcf ./backup/xnat_home.tar.gz --exclude="./archive"  --exclude="./inbox"  --exclude="./build" --exclude="./cache"  -C $xnat_home .

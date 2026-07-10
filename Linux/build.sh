@@ -187,7 +187,7 @@ then
 
     if [[ "$ssl_trust_file" = *"/"* ]]
     then
-        echo "Error: Check xnat.cfg - ssl trust file contains a file seperator - only include the filename"
+        echo "Error: Check xnat.cfg - ssl trust file contains a file seperator - only include the filename. Put 'none' if no certificate"
         exit 1
     fi
 
@@ -292,9 +292,6 @@ echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:
 ### in Linux, only CATALINA important as runs first
 echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" >> ./xnat/conf1/setenv.sh
 
-
-
-
 #sed doesn't like underscores?
 URL=$xnat_host
 #sed -i -e '/@SIF@/{r ./xnat/SeriesImportFilter.txt' -e 'd}'  ./xnat/conf2/siteConfig.txt ./xnat/conf1/siteConfig.txt
@@ -307,6 +304,7 @@ sed -i "s/@PROJECT@/$site_name/g"  ./xnat/conf1/siteConfig.txt
 sed -i "s/@PG_USR@/$psql_user/g"  ./xnat/conf1/xnat-conf.properties
 sed -i "s/@PG_PWD@/$psql_pwd/g"  ./xnat/conf1/xnat-conf.properties
 sed -i  "s/@SITE@/$site_name/g"    ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
+sed -i  "s|/xnat-data|$xnat_data|g" ./xnat/conf1/setup-xnat.sh
 
 
 
@@ -328,6 +326,11 @@ sed -i  "s/@KEY@/$ssl_key_file/g"  "$NGINX_CONF"
 sed -i  "s/@PEM@/$ssl_dhparam_file/g"  "$NGINX_CONF"
 sed -i  "s/@TRUST@/$ssl_trust_file/g"  "$NGINX_CONF"
 
+if [  "${ssl_trust_file,,}"  == "none" ]
+then
+  echo "NGinx trust file = none. Removing Trust certicate from Nginx COnfig file"
+  sed -i  "s/ssl_trusted_certificate/#ssl_trusted_certificate/g"  "$NGINX_CONF"
+fi
 
 if [  "${in_command,,}"  != "upgrade" ]
 then

@@ -46,6 +46,10 @@ if [ -f "$backup_dir/toc.dat" ]; then
         # much faster as can do in parralel, j=5 cpu
       pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j "${cpu_cores}" -C /pg_backup/xnat
       rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+      # have to optimise.
+      date >> /data/scripts/logs/setup.log
+       echo "Database restored. analyzing database."
+      psql -h xnat-db -p 5432 -U xnat -d xnat -c "ANALYZE VERBOSE;" > /data/scripts/logs/analyze_db.log 2>&1
 
 elif [ -f "$plain_file" ]; then
         		  echo "Backup database file xnat.sql.gz detected. Uncompressing and restoring....xnat.sql.gz " >> /data/scripts/logs/setup.log
@@ -54,14 +58,24 @@ elif [ -f "$plain_file" ]; then
         		  gunzip -k -f /pg_backup/xnat.sql.gz
             psql -h xnat-db -p 5432 -U xnat  -f /pg_backup/xnat.sql xnat
             rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+            # have to optimise.
+            date >> /data/scripts/logs/setup.log
+             echo "Database restored. analyzing database."
+            psql -h xnat-db -p 5432 -U xnat -d xnat -c "ANALYZE VERBOSE;" > /data/scripts/logs/analyze_db.log 2>&1
+
+
 elif [ -f "$custom_file" ]; then
         		  echo "Backup database file xnat.custom detected. " >> /data/scripts/logs/setup.log
         		   psql_pwd="$(head /run/secrets/pgpass)"
               export PGPASSWORD="$psql_pwd"
         		  pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fc -j "${cpu_cores}"  -C /pg_backup/xnat.custom
             rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+            # have to optimise.
+            date >> /data/scripts/logs/setup.log
+             echo "Database restored. analyzing database."
+            psql -h xnat-db -p 5432 -U xnat -d xnat -c "ANALYZE VERBOSE;" > /data/scripts/logs/analyze_db.log 2>&1
 fi
-
+date >> /data/scripts/logs/setup.log
 echo 'Starting Server' >> /data/scripts/logs/setup.log
 /usr/local/tomcat/bin/startup.sh &
 #/usr/local/tomcat/bin/catalina.sh run &
