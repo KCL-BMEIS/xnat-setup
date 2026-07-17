@@ -5,11 +5,9 @@ Edit the *-provider.properties file(s) with your authenticator server(s).
 
 Run:
 
-    docker build -f Dockerfile-add-ldap -t xnat:ldap .
+    cd /path/to/xnat-setup/Linux/ldap && ./build_ldap_image.sh
 
-Note, if you are not using the default xnat:latest docker image in your docker-compose.yml file, then edit Dockerfile-add-ldap before running the above, using your image as the base image.
-
-Change the docker image used by xnat-web in docker-compose.yml to xnat-ldap and run ./restart.sh
+Change the docker image used by xnat-web in docker-compose.yml to xnat:{xnat version}ldap and run ./restart.sh
 
 In User Auth Settings add additional authenticator, for example:
 

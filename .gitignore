@@ -21,7 +21,7 @@ xnat-empty.cfg
 /xnat/conf1/*txt
 /xnat/conf1/*ini
 /xnat/conf1/setenv.sh
-/plugins/*jar
+/plugins/*.jar
 /scripts/logo.png
 /nginx/xnat.conf
 /tests/xnat.cfg
@@ -33,3 +33,7 @@ test-proxy.sh
 #/tests/xnat_test_linux.cfg
 /pl-backup/
 /pl-backup/plugins/
+/test_upgrade/
+/bmeis_custom/
+/bmeis_custom/crontab
+/bmeis_custom/clean_logs.sh

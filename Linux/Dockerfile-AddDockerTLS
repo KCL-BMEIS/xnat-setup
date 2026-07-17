@@ -1,0 +1,18 @@
+
+# Use Dockerfile-AddDockerTLS - enables TLS for the docker contianer service
+# Place your directory contianing your certificates in /xnat-data/xnat/scripts.
+# run docker build command:
+#docker build  --build-arg XNAT_IMAGE="$XNAT_IMAGE"  -f Dockerfile-AddDockerTLS -t $XNAT_IAMGE" .
+# example:
+# docker build  --build-arg XNAT_IMAGE=xnat:1.10.0  -f Dockerfile-AddDockerTLS -t xnat:1.10.0 .
+# You can change the output image, then edit docker-compose.yml to use it, for example -t xnat:1.10.0TLS
+# then ./restart.sh
+
+ARG XNAT_IMAGE=xnat:1.10.0
+FROM $XNAT_IMAGE
+
+RUN apt-get -yq update && apt-get -yq upgrade
+RUN sed -i "s|CATALINA_OPTS} -D|CATALINA_OPTS} -DDOCKER_TLS_VERIFY=1 -D|g" /usr/local/tomcat/bin/setenv.sh
+
+
+

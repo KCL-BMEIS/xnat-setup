@@ -44,29 +44,46 @@ if [ -f "$backup_dir/toc.dat" ]; then
         psql_pwd="$(head /run/secrets/pgpass)"
        export PGPASSWORD="$psql_pwd"
         # much faster as can do in parralel, j=5 cpu
-      pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j 5 -C /pg_backup/xnat
+      pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fd -j "${cpu_cores}" -C /pg_backup/xnat
       rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+      # have to optimise.
+      date >> /data/scripts/logs/setup.log
+       echo "Database restored. analyzing database."
+      psql -h xnat-db -p 5432 -U xnat -d xnat -c "ANALYZE VERBOSE;" > /data/scripts/logs/analyze_db.log 2>&1
 
 elif [ -f "$plain_file" ]; then
-        		  echo "Backup database file xnat.sql.gz detected. Uncompressing....xnat.sql.gz " >> /data/scripts/logs/setup.log
+        		  echo "Backup database file xnat.sql.gz detected. Uncompressing and restoring....xnat.sql.gz " >> /data/scripts/logs/setup.log
         		   psql_pwd="$(head /run/secrets/pgpass)"
               export PGPASSWORD="$psql_pwd"
         		  gunzip -k -f /pg_backup/xnat.sql.gz
             psql -h xnat-db -p 5432 -U xnat  -f /pg_backup/xnat.sql xnat
             rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+            # have to optimise.
+            date >> /data/scripts/logs/setup.log
+             echo "Database restored. analyzing database."
+            psql -h xnat-db -p 5432 -U xnat -d xnat -c "ANALYZE VERBOSE;" > /data/scripts/logs/analyze_db.log 2>&1
+
+
 elif [ -f "$custom_file" ]; then
         		  echo "Backup database file xnat.custom detected. " >> /data/scripts/logs/setup.log
         		   psql_pwd="$(head /run/secrets/pgpass)"
               export PGPASSWORD="$psql_pwd"
-        		  pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fc -j 5 -C /pg_backup/xnat.custom
+        		  pg_restore -h xnat-db -p 5432 -U xnat -d xnat -Fc -j "${cpu_cores}"  -C /pg_backup/xnat.custom
             rc=$?; if [[ $rc != 0 ]]; then echo "Failed restoring database: $rc"; fi
+            # have to optimise.
+            date >> /data/scripts/logs/setup.log
+             echo "Database restored. analyzing database."
+            psql -h xnat-db -p 5432 -U xnat -d xnat -c "ANALYZE VERBOSE;" > /data/scripts/logs/analyze_db.log 2>&1
 fi
-
+date >> /data/scripts/logs/setup.log
 echo 'Starting Server' >> /data/scripts/logs/setup.log
 /usr/local/tomcat/bin/startup.sh &
 #/usr/local/tomcat/bin/catalina.sh run &
 #/data/xnat/run_tomcat.sh &
 
+# spring clean - sawfe to delete work when XNAT not running
+rm -rf /data/xnat/home/work
+mkdir -p /data/xnat/home/work
 
 echo 'Starting cron' >> /data/scripts/logs/setup.log
 mkdir /data/scripts/access_logs
@@ -145,11 +162,24 @@ else
   ]' 'http://localhost:8080/xapi/users/'"$xnat_admin_user"'/roles'  >> /data/scripts/logs/technicalsetup.log
 
 
+
+
+
   echo "Installing Config File" >> /data/scripts/logs/technicalsetup.log
   #### INSTALL SITECONFIG
   settings="$(cat /data/xnat/home/siteConfig.txt)"
   curl -u admin:admin  -X POST --header 'Content-Type: application/json' --header 'Accept: */*' -d "$settings"  'http://localhost:8080/xapi/siteConfig' >> /data/scripts/logs/technicalsetup.log
 
+
+
+
+  echo "Configuring DICOM reciever" >> /data/scripts/logs/technicalsetup.log
+  curl -u admin:admin -X PUT \
+  -H 'Content-Type: application/json' \
+  --data-raw '{"id":1,"aeTitle":"XNAT","port":8104,"enabled":true,"customProcessing":false,"directArchive":false,"directArchiveOverwrite":false,"identifier":"dicomObjectIdentifier","anonymizationEnabled":false,"whitelistEnabled":false,"whitelistText":"","routingExpressionsEnabled":false,"projectRoutingExpression":"","subjectRoutingExpression":"","sessionRoutingExpression":""}' 'http://localhost:8080/xapi/dicomscp/1/' >> /data/scripts/logs/technicalsetup.log
+
+
+  echo "ConfiguringDocker service and Event service" >> /data/scripts/logs/technicalsetup.log
   #enable event service:
   curl -u admin:admin  -X PUT "http://localhost:8080/xapi/events/prefs" -H  "accept: */*" -H  "Content-Type: application/json" -d "{  \"enabled\": true}"
 
@@ -162,8 +192,6 @@ else
   curl -u admin:admin -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://localhost:8080/xapi/users/guest/enabled/false' >> /data/scripts/logs/technicalsetup.log
   #cannot set password, well not easily.
   #curl -u $xnat_admin_user:$xnat_admin_pwd -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://localhost:8080/xapi/users/admin/enabled/false' >> /data/scripts/logs/technicalsetup.log
-
-
 
 fi
 

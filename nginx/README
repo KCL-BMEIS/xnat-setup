@@ -6,3 +6,6 @@
 
 * Cron does not work well in alpine, so just use a cronjob on host. Script logrotate.sh
 * 50 00 * * * [PATH TO]/xnat-setup/nginx/logrotate.sh > [pathto]/xnat-setup/nginx-logrotate.log
+
+* nginx -s reload
+* client_max_body_size                0; - this means no limit.

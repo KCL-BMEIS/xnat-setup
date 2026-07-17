@@ -1,10 +1,23 @@
+
+
 ## Please read full instructions: https://github.com/KCL-BMEIS/xnat-setup/wiki
 
-## Updates 
+## Updates 9th May 2026 - JDK21
+* Uses tomcat:9-jdk21-temurin-noble base image for XNAT
+* garbage collector changed , with G1GC, and EnableJVMCI
+* Only works with XNAT 1.10+
+* Many code improvements.
+* pg_maintenence script added to postgresql image.
+* added postgresql:alpine as option in xnat.cfg.
+* docker_tls in xnat.cfg, adds -DDOCKER_TLS_VERIFY=1 tomcat setenv.sh to connect to container service using SSL certificates.
+* postgresql-client upgraded to v17 for easier upgrading of Postgresql.
+
+
+## Updates 1 october 2025
 * Checks whether postgresql running and password found when upgrading.
 * Updates postgresql settings in restart.sh
-* restore_from_pg_backup.sh - can restore from both plain and directory format backups.
-* update_image_war.sh - detects base images from dockerfiles.
+* restore_from_pg_backup.sh - can detect and restore from plain, custom and directory format backups. Extra checks added.
+* update_image_war.sh - detects base images from dockerfiles, not hardcoded.
 * Fixed pg_backup.sh to delete the files according to config file.
 
 

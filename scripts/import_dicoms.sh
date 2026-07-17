@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 
-source /data/xnat/home/xnat.cfg
-cd $data_import_path
-dicom_port=8104.
-# (change, make newdicom recievr?)
-echo "$data_import_path"
+dicom_port=8104. # check
 while true
 do
   sleep 60
@@ -12,7 +8,7 @@ do
         if [ -d "${dir}" ]; then
             num1=$(find $dir -type f | wc -l)
             #echo "$dir $num1"
-            sleep 20
+            sleep 60
             num2=$(find $dir -type f | wc -l)
            #echo "$dir $num2"
             if [ "$num1" == "$num2" ] && [ "$num1" != "0" ];

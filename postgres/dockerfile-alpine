@@ -1,9 +1,13 @@
 FROM postgres:16-alpine
 #neeedd to ensure host and containers have the same time
 ARG TIMEZONE
-RUN apk add tzdata
+RUN apk add tzdata  --no-cache
 #RUN apt-get install tzdata
 ENV TZ=$TIMEZONE
+RUN apk upgrade --no-cache
+
+ADD pg_maintenance.sh /usr/local/bin
+RUN chmod 770 /usr/local/bin/pg_maintenance.sh
 
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime #&& dpkg-reconfigure -f noninteractive tzdata
 

@@ -39,6 +39,22 @@ sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_worke
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET max_parallel_maintenance_workers = $max_parallel_maintenance_workers"
 # Do NOT set huge pages on on Linux systems
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET huge_pages = $huge_pages"
+sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET jit = $jit"
+sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET wal_compression = $wal_compression"
+
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum = on"                           # Essential. Never turn this off.
+## Frequency & Multi-tasking
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_max_workers = 4"               # Increase to 4 or 6 if managing massive data catalogs
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_naptime = 1min"                # Shortens intervals between system checks
+## Aggressive Cleanup Thresholds (Triggers cleaning sooner)
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_vacuum_scale_factor = 0.05"     # Drops threshold from 20% to 5% of changed rows
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_vacuum_threshold = 50"          # Minimum changed rows to initiate vacuuming
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_analyze_scale_factor = 0.02"    # Drops statistical threshold to 2% of rows
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_analyze_threshold = 50"         # Minimum changed rows to initiate analysis
+## Performance & Speed (Reduces throttling)
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_vacuum_cost_limit = 1000"       # Increases total I/O work allowed per cycle
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_vacuum_cost_delay = 2ms"        # Minimizes sleep time between worker cycles
+#sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_work_mem = 256MB"
 
 
 docker commit "$PG"  postgres-xnat

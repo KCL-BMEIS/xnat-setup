@@ -5,7 +5,13 @@ ARG TIMEZONE
 RUN apt-get install tzdata
 ENV TZ=$TIMEZONE
 
+RUN export DEBIAN_FRONTEND=noninteractive && export TZ=${TZ}  \
+    && apt-get -yq update && apt-get -yq upgrade
+
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
+
+ADD pg_maintenance.sh /usr/local/bin
+RUN chmod 770 /usr/local/bin/pg_maintenance.sh
 # not in alpine - && dpkg-reconfigure -f noninteractive tzdata
 
 # debian:

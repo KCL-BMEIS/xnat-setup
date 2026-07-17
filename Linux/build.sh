@@ -6,17 +6,8 @@ CI=$2
 timezone=$(cat /etc/timezone)
 echo "Timezone: $timezone"
 
-
-
-#repo containing xnat plugins
-bitbucket_repo="https://api.bitbucket.org/2.0/repositories"
 #static postgresql user
 psql_user="xnat"
-
-
-newline=$'\n'
-warning_messages="### Warning messages: $newline"
-
 
 linux_dir=$(dirname "$0")
 cd "$linux_dir"
@@ -38,9 +29,13 @@ fi
 sed -i "s/ //g"  "$install_dir/xnat.cfg"
 dos2unix "$install_dir/xnat.cfg"
 source "$install_dir/xnat.cfg"
+xnat_home="$xnat_data/xnat"
+postgres_path="$xnat_data/postgresql"
+import_data_folder="$xnat_data/import_data"
+
 #used to be seperate, now uses same as xnat_home
 
-if [ "$in_command" == "upgrade"  ] ; then
+if [ "${in_command,,}" == "upgrade"  ] ; then
     read -p  "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
     if [ "$cont" != "y" ]  && [ "$CI" != "CI" ]
     then
@@ -62,13 +57,16 @@ if [ "$in_command" == "upgrade"  ] ; then
         exit 1
     fi
 
-    rm -rf "$xnat_home/scripts/xnat-conf.properties"
-    #echo "psql password: $psql_pwd"
-    #exit
-elif [ "$in_command" == "CI" ]; then
+    # remove properties file once extracted pwd
+    rm  $xnat_home/scripts/xnat-conf.properties
+
+    # remove existing plugins if upgrading
+    rm $xnat_home/scripts/plugins/*
+
+elif [  "${in_command,,}"  == "ci" ]; then
    echo "Building XNAT - CI"
 else
-  read -p  "Building XNAT. This will build the docker containers and interupt existing containers. Do you wish to Continue? y/n " cont
+  read -p  "Building XNAT. This will build the docker containers and interrupt existing containers. Do you wish to Continue? y/n " cont
       if [ "$cont" != "y" ]
     then
       exit
@@ -76,11 +74,8 @@ else
 fi
 
 
-
-chmod 770 "$install_dir/Linux/clean_docker.sh"
-
 echo "### CHECKING to see if shared folders exist   ###"
-if [ -d "$xnat_home" ] && [ "$in_command" != "upgrade" ]
+if [ -d "$xnat_home" ] && [  "${in_command,,}"  != "upgrade" ]
 then
     echo "Archive path already exists. Use restart_and_clean.sh or restart.sh"
     exit 1
@@ -97,7 +92,7 @@ if [  "$ssl" = false ] && [[ "$xnat_host" != "http://"* ]]
 then
     echo "Error: URL malformed, does not start with http://"
     exit 1
-fi 
+fi
 
 if [ ${#xnat_home} -le 2 ]
 then
@@ -126,7 +121,7 @@ then
 fi
 
 
-if [ ${#psql_pwd} -le 4 ] && [ "$in_command" != "upgrade" ]
+if [ ${#psql_pwd} -le 4 ] && [  "${in_command,,}"  != "upgrade" ]
 then
     echo "Error: Check xnat.cfg - psql_pwd too short $psql_pwd"
     exit 1
@@ -192,7 +187,7 @@ then
 
     if [[ "$ssl_trust_file" = *"/"* ]]
     then
-        echo "Error: Check xnat.cfg - ssl trust file contains a file seperator - only include the filename"
+        echo "Error: Check xnat.cfg - ssl trust file contains a file seperator - only include the filename. Put 'none' if no certificate"
         exit 1
     fi
 
@@ -201,11 +196,10 @@ fi
 
 stacks=$(docker stack ls)
 if [[ $stacks = *"xnat-stack"* ]]; then
-    echo "### xnat already running.... stopping current service and rebuilding###" 
+    echo "### xnat already running.... stopping current service and rebuilding###"
 	docker stack rm xnat-stack
 	sleep 60
 fi
-
 docker swarm leave
 
 echo "### Installing XNAT - $site_name   ###"
@@ -218,9 +212,7 @@ echo "# admin email:  $xnat_admin_email            ###"
 
 
 
-if [ "$in_command" != "upgrade" ]
-then
-    mkdir -p "$xnat_home/"
+if [  "${in_command,,}"  != "upgrade" ]; then
     mkdir -p "$xnat_home/archive/"
     mkdir -p "$postgres_path/postgres-data/"
     mkdir -p "$xnat_home/certificates/"
@@ -230,18 +222,28 @@ then
     mkdir -p "$xnat_home/inbox/"
     mkdir -p "$import_data_folder"
     chmod 777 "$import_data_folder"
+
+    mkdir -p "$xnat_home/scripts/logs/"
+    mkdir -p "$xnat_home/scripts/access_logs/"
+    mkdir -p "$xnat_home/scripts/plugins"
+fi
+
+if [ ! -d "$xnat_home/inbox" ]
+then
+  # some old installs did not have, so required when upgrading
+  mkdir -p "$xnat_home/inbox/"
 fi
 
 if [ -d "$xnat_home/archive" ]
 then
-    echo "Success: xnat path created"
+    echo "Success: xnat archive $xnat_home/archive created"
 else
     echo "Error: No archive path created"
     exit 1
 fi
 if [ -d "$import_data_folder" ]
 then
-    echo "Success: import data folder exists"
+    echo "Success: import data folder $import_data_folder created"
 else
     echo "Error: No import data folder exists"
     exit 1
@@ -251,7 +253,7 @@ fi
 ### need to edit setup_xnat.sh...
 cp xnat.cfg ./xnat/xnat.cfg
 cp ./xnat/templates/prefs-init.ini-template ./xnat/conf1/prefs-init.ini
-cp ./xnat/templates/site-config-template ./xnat/conf1/siteConfig.txt
+cp ./xnat/templates/site-config-template.json ./xnat/conf1/siteConfig.txt
 cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.properties
 
 
@@ -275,43 +277,40 @@ cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.propert
 #-XX:+UnlockExperimentalVMOptions \\
 #-XX:+DisableExplicitGC \\
 
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+# -DDOCKER_TLS_VERIFY=1 Need tls if connecting to docker container service using certifcates
+if [ "$docker_tls" = true ]; then
+  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1 -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
 
+else
+  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+fi
 echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
 
-# OLD version
-#echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseConcMarkSweepGC  -XX:-OmitStackTraceInFastThrow\"" >> ./xnat/conf1/setenv.sh
+# mentions when startig tomcat: EXPERIMENTAL - only works if experimental unlocked
+# echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -XX:+UnlockExperimentalVMOptions. -XX:+EnableJVMCI \"" > ./xnat/conf1/setenv.sh
 
 ### in Linux, only CATALINA important as runs first
 echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" >> ./xnat/conf1/setenv.sh
-
-
 
 #sed doesn't like underscores?
 URL=$xnat_host
 #sed -i -e '/@SIF@/{r ./xnat/SeriesImportFilter.txt' -e 'd}'  ./xnat/conf2/siteConfig.txt ./xnat/conf1/siteConfig.txt
 sed -i "s/@XNAT_ADMIN_USER@/$xnat_admin_user/g"  ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
 sed -i "s#@SITEURL@#$URL#g"     ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
-
-
 sed -i "s#@PIPELINE_URL@#$URL#g" ./xnat/conf1/siteConfig.txt
 sed -i "s#@SITEURL@#$URL#g" ./xnat/conf1/siteConfig.txt
-
-
 sed -i "s/@ADMIN_EMAIL@/$xnat_admin_email/g" ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
 sed -i "s/@PROJECT@/$site_name/g"  ./xnat/conf1/siteConfig.txt
-#remove dbnum, not needed
-sed -i "s/@DB_NUM@/1/g"  ./xnat/conf1/xnat-conf.properties
 sed -i "s/@PG_USR@/$psql_user/g"  ./xnat/conf1/xnat-conf.properties
 sed -i "s/@PG_PWD@/$psql_pwd/g"  ./xnat/conf1/xnat-conf.properties
-
 sed -i  "s/@SITE@/$site_name/g"    ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
+sed -i  "s|/xnat-data|$xnat_data|g" ./xnat/conf1/setup-xnat.sh
 
 
 
 # NGINX ssl config
 NGINX_CONF='./nginx/xnat.conf'
-if [ "$ssl" = true ] 
+if [ "$ssl" = true ]
 then
     echo "Nginx configured for https, secure site"
     cp ./nginx/xnat_ssl.conf ./nginx/xnat.conf
@@ -327,9 +326,32 @@ sed -i  "s/@KEY@/$ssl_key_file/g"  "$NGINX_CONF"
 sed -i  "s/@PEM@/$ssl_dhparam_file/g"  "$NGINX_CONF"
 sed -i  "s/@TRUST@/$ssl_trust_file/g"  "$NGINX_CONF"
 
-
-if [ "$in_command" != "upgrade" ]
+if [  "${ssl_trust_file,,}"  == "none" ]
 then
+  echo "NGinx trust file = none. Removing Trust certicate from Nginx COnfig file"
+  sed -i  "s/ssl_trusted_certificate/#ssl_trusted_certificate/g"  "$NGINX_CONF"
+fi
+
+if [  "${in_command,,}"  != "upgrade" ]
+then
+      # set docker subnet
+      if [ ${#docker_subnet} -ge 6 ]
+      then
+        docker network create --driver overlay --subnet $docker_subnet  xnat-stack-net
+        sed -i "s/#networks:/networks:/g"   "$DOCKER_FILE"
+        sed -i "s/#xnat-net:/xnat-net:/g"   "$DOCKER_FILE"
+        sed -i "s/#- xnat-net/- xnat-net/g"   "$DOCKER_FILE"
+         sed -i "s/#name: xnat-stack-net/name: xnat-stack-net/g"   "$DOCKER_FILE"
+         sed -i "s/#external: true/external: true/g"   "$DOCKER_FILE"
+      fi
+
+        if [  "$ssl" = true  ]
+        then
+          # skip if upgrading s already in place
+            cp ./certs/* $xnat_home/certificates/
+        fi
+
+
       # Create secrets....
       #POSTGRESQL
       #echo "$psql_pwd" > pgapss
@@ -344,14 +366,7 @@ then
 fi
 
 DOCKER_FILE='docker-compose.yml'
-if [ "$in_command" != "test" ]
-then
-   cp docker-compose-stack.yml docker-compose.yml
-else
-
-   cp docker-compose-test.yml docker-compose.yml
-fi
-
+cp docker-compose-stack.yml docker-compose.yml
 
 sed -i  "s/#LINX//g"   "$DOCKER_FILE"
 sed -i  "s#@ARCHIVE_PATH@#$xnat_home#g"   "$DOCKER_FILE"
@@ -359,84 +374,7 @@ sed -i  "s#@PWD@#$install_dir#g"   "$DOCKER_FILE"
 sed -i  "s#@XNAT_HOME@#$xnat_home#g"   "$DOCKER_FILE"
 sed -i  "s#@POSTGRES_PATH@#$postgres_path#g"   "$DOCKER_FILE"
 sed -i  "s#@IMPORT_DATA_FOLDER@#$import_data_folder#g"   "$DOCKER_FILE"
-sed -i "s/@PG_PWD@/$psql_pwd/g"   "$DOCKER_FILE" 
-sed -i "s/@PG_USER@/$psql_user/g"   "$DOCKER_FILE" 
-# set docker subnet
-if [ ${#docker_subnet} -ge 6 ]
-then
-  docker network create --driver overlay --subnet $docker_subnet  xnat-stack-net
-  sed -i "s/#networks:/networks:/g"   "$DOCKER_FILE"
-  sed -i "s/#xnat-net:/xnat-net:/g"   "$DOCKER_FILE"
-  sed -i "s/#- xnat-net/- xnat-net/g"   "$DOCKER_FILE"
-   sed -i "s/#name: xnat-stack-net/name: xnat-stack-net/g"   "$DOCKER_FILE"
-   sed -i "s/#external: true/external: true/g"   "$DOCKER_FILE"
-fi
-
-
-## COPY PLUGINS AND WEBAPPS
-cd plugins
-if [  "$batch_launch" = true ]
-then
-  rm -f *batch-launc*
-  wget  "${bitbucket_repo}/xnatx/xnatx-batch-launch-plugin/downloads/batch-launch-$batch_launch_version.jar"
-  rc=$?;   if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download batch launch plugin rc:$rc $newline ${bitbucket_repo}/xnatx/xnatx-batch-launch-plugin/downloads/batch-launch-$batch_launch_version.jar $newline "; fi
-
-fi
-if [  "$container_service" = true ]
-then
-  rm -f *container-ser*
-  wget "${bitbucket_repo}/xnatdev/container-service/downloads/container-service-$container_service_version-fat.jar"
-  rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download container service plugin rc:$rc $newline"; fi
-fi
-if [  "$dqr" = true ]
-then
-  rm -f *dicom-query-retrieve*
-  wget "${bitbucket_repo}/xnatdev/dicom-query-retrieve/downloads/dicom-query-retrieve-$dqr_version-xpl.jar"
-  rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download dqr plugin rc:$rc $newline"; fi
-fi
-if [  "$xsync" = true ]
-then
-  rm -f *xsync*
-  wget "${bitbucket_repo}/xnatdev/xsync/downloads/xsync-plugin-all-$xsync_version.jar"
-  rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download xsync plugin rc:$rc $newline"; fi
-fi
-if [  "$ldap" = true ]
-then
-  rm -f *ldap-auth*
-  wget "${bitbucket_repo}/xnatx/ldap-auth-plugin/downloads/ldap-auth-plugin-$ldap_version.jar"
-  rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download ldap plugin: rc:$rc $newline"; fi
-fi
-if [  "$ohif_viewer" = true ]
-then
-  rm -f *ohif-viewer*
-  wget "https://xnat.org/files/ohif-viewer-xnat-plugin/ohif-viewer-$ohif_viewer_version.jar"
-  rc=$?; if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download ohif viewer plugin: rc:$rc $newline"; fi
-fi
-if [  "$jupyter" = true ]
-then
-  rm -f *jupyter*
-  wget  "${bitbucket_repo}/xnatx/xnat-jupyterhub-plugin/downloads/xnat-jupyterhub-plugin-$jupyter_version.jar"
-  rc=$?;   if [[ $rc != 0 ]]; then warning_messages="$warning_messages warning: could not download jupyterhub plugin rc:$rc $newline ${bitbucket_repo}/xnatx/xnat-jupyterhub-plugin/downloads/xnat-jupyterhub-plugin-$jupyter_version.jar $newline "; fi
-
-fi
-
-
-cd ..
-mkdir -p $xnat_home/scripts/plugins
-# in case of upgrading
-rm $xnat_home/scripts/plugins/*
-cp -R ./plugins/  $xnat_home/scripts/
-
-
-if [  "$ssl" = true ] 
-then
-    cp ./certs/* $xnat_home/certificates/
-fi
-
-cp -r ./scripts/* $xnat_home/scripts/
-
-mkdir -p "$xnat_home/scripts/logs/"
-mkdir -p "$xnat_home/scripts/access_logs/"
+sed -i "s/@PG_USER@/$psql_user/g"   "$DOCKER_FILE"
 
 
 #### SET PROXY
@@ -459,12 +397,12 @@ then
     
     rm -rf  ./xnat_proxy
     cp -R ./xnat ./xnat_proxy
-    sed -i  "s\#ENV \ENV \g"   ./xnat_proxy/Dockerfile
-    sed -i "s#@PROXYURL@#$proxy_url#g"   ./xnat_proxy/Dockerfile
-    sed -i "s#@PROXYPORT@#$proxy_port#g"   ./xnat_proxy/Dockerfile
-    sed -i  "s\@JAVA_PROXY@\ $JAVA_PROXY \g"   ./xnat_proxy/Dockerfile
-    sed -i  "s\#RUN su - \RUN su -  \g"   ./xnat_proxy/Dockerfile
-     sed -i "s#@URLNAME@#$url_name#g"   ./xnat_proxy/Dockerfile
+    sed -i  "s\#ENV \ENV \g"   ./xnat_proxy/dockerfile
+    sed -i "s#@PROXYURL@#$proxy_url#g"   ./xnat_proxy/dockerfile
+    sed -i "s#@PROXYPORT@#$proxy_port#g"   ./xnat_proxy/dockerfile
+    sed -i  "s\@JAVA_PROXY@\ $JAVA_PROXY \g"   ./xnat_proxy/dockerfile
+    sed -i  "s\#RUN su - \RUN su -  \g"   ./xnat_proxy/dockerfile
+     sed -i "s#@URLNAME@#$url_name#g"   ./xnat_proxy/dockerfile
 
     
     # bash rpofile
@@ -491,20 +429,38 @@ fi
 
 # DOCKER_BUILDKIT=1  ? makes faster
 echo "############### Building Docker Images, XNAT version: $xnat_version   timezone: $timezone"
-docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -f Dockerfile -t xnat .
+
+docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -t xnat:"${xnat_version}"  .
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
+# set version of xnat image in docker-compose
+sed -i  "s|image: xnat:latest|image: xnat:${xnat_version}|g"  ./docker-compose.yml
+
 cd nginx
 docker build   --build-arg TIMEZONE=${timezone} -t nginx-xnat .
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 cd postgres
-docker build  --build-arg TIMEZONE=${timezone} -f Dockerfile -t postgres-xnat .
+if [ "$use_pg_alpine" == true ]
+then
+  echo "## us_pg_alpine set to true: Using postresql alpine image"
+  docker build  --build-arg TIMEZONE=${timezone} -f dockerfile-alpine -t postgres-xnat .
+else
+  docker build  --build-arg TIMEZONE=${timezone} -t postgres-xnat .
+fi
+
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 
+echo "completed build - downloading plugins and starting docker"
+# umm, skip if upgrading?
+cp -r ./scripts/* $xnat_home/scripts/
+cd Linux
+warning_messages="$(/bin/bash download_plugins.sh)"
+cp  ../plugins/*.jar  "$xnat_home/scripts/plugins"
+cd ..
 
-
+echo "############ Ignore error if node already part of swarm...."
 docker swarm init
 
 echo "############ Deploying XNAT Docker Stack..."
@@ -523,14 +479,11 @@ cd ..
 chmod -R 660 "$xnat_home/certificates/"
 
 
-
-echo "completed build"
-echo "$warning_messages"
-
+# print warning messages
+echo "${warning_messages}"
 
 
-
-if [ "$in_command" != "test" ]
+if [  "${in_command,,}"  != "test" ]
 then
     echo "###### RUNNING TESTS #######################"
     echo "###### PLEASE BE PATIENT, THIS WILL TAKE TIME TO APPEAR#######"
@@ -572,12 +525,7 @@ then
     fi
 
 
-  #cd tests
-   #cp -R ./test_data $import_data_folder
-    #bats run_linux_tests.bats
-	### delete xnat.cfg passwords
-	###disabled for testsing
-    #cd ..
+
 
 	  sed -i 's/_pwd=.*/_pwd=/g' xnat.cfg ./xnat/xnat.cfg
     sed -i 's/_pwd_research=.*/_pwd_research=/g' xnat.cfg ./xnat/xnat.cfg

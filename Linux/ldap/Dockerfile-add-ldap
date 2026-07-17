@@ -1,4 +1,5 @@
-FROM xnat:latest
+ARG XNAT_VERSION="latest"
+FROM xnat:${XNAT_VERSION}
 
 #RUN mkdir /data/xnat/home/config/auth
 ADD *-provider.properties /data/xnat/home/config/auth/
