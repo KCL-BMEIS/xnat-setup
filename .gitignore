@@ -10,7 +10,6 @@
 /Linux/test*
 **/backup
 docker-compose.yml
-xnat-empty.cfg
 /certs/*key
 /certs/*crt
 /certs/*pem

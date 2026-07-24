@@ -36,10 +36,12 @@ import_data_folder="$xnat_data/import_data"
 #used to be seperate, now uses same as xnat_home
 
 if [ "${in_command,,}" == "upgrade"  ] ; then
-    read -p  "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
-    if [ "$cont" != "y" ]  && [ "$CI" != "CI" ]
-    then
-      exit
+    if [ "$CI" != "CI" ]; then
+      read -p  "Upgrading XNAT to $xnat_version. Ensure everything is backed up. Do you wish to Continue? y/n " cont
+      if [ "$cont" != "y" ]
+      then
+        exit
+      fi
     fi
     ###get psql password
     LINE=$(docker ps | grep -E xnat-web | cut -c1-12)
@@ -74,10 +76,10 @@ else
 fi
 
 
-echo "### CHECKING to see if shared folders exist   ###"
+echo "### CHECKING to see if mounted directories already exist   ###"
 if [ -d "$xnat_home" ] && [  "${in_command,,}"  != "upgrade" ]
 then
-    echo "Archive path already exists. Use restart_and_clean.sh or restart.sh"
+    echo "$xnat_home/xnat  already exists. Use restart_and_clean.sh or restart.sh"
     exit 1
 fi
 
