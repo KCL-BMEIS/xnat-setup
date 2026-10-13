@@ -53,7 +53,10 @@ ADD xnat.cfg /data/xnat/home
 #ADD bash_profile /opt/
 
 
-RUN curl -L -o /tmp/xnat.war  https://api.bitbucket.org/2.0/repositories/xnatdev/xnat-web/downloads/xnat-web-${XNAT_VER}.war
+# RUN curl -L -o /tmp/xnat.war  https://api.bitbucket.org/2.0/repositories/xnatdev/xnat-web/downloads/xnat-web-${XNAT_VER}.war
+
+RUN curl -L -o /tmp/xnat.war https://github.com/NrgXnat/xnat/releases/download/${XNAT_VER}/xnat-web-${XNAT_VER}.war
+
 #for testing
 #ADD xnat.war /tmp/
 RUN rm -rf ${CATALINA_HOME}/webapps/*
@@ -69,8 +72,9 @@ RUN chmod -R 770 /data/xnat/home
 
 RUN apt-get -yq update && apt -yq install python3-pydicom python3-docopt python3-lxml python3-requests
 
-# if ldap:
-# ADD conf1/ldap-provider.properties /data/xnat/home/config
+# if ldap, uncomments in build.sh
+ADD  conf1/*-provider.properties /data/xnat/home/config/auth/
+
 
 ENV XNAT_HOME=${XNAT_HOME}
 

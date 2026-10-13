@@ -12,15 +12,16 @@ DB_NAME="xnat"
 # enable if you wish to skip
 TABLES_TO_SKIP="('xdat_change_info', 'wrk_workflowdata_meta_data')"
 
-
+# SKIP  ROUTINE REINEDEXING
 # Query all tables, filter out the skipped ones, and run reindexdb for each
-echo "Reindexing database..."
+
+#echo "Reindexing database..."
 # swap lines if filtering:
 # psql -U xnat -d "$DB_NAME" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT IN $TABLES_TO_SKIP" | while read TABLE; do
-psql -U xnat -d "$DB_NAME" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'public'" | while read TABLE; do
-
-  reindexdb  -U xnat   --concurrently  -t "$TABLE" "$DB_NAME"
-done
+#psql -U xnat -d "$DB_NAME" -Atc "SELECT tablename FROM pg_tables WHERE schemaname = 'public'" | while read TABLE; do
+#
+#  reindexdb  -U xnat   --concurrently  -t "$TABLE" "$DB_NAME"
+#done
 
 echo "Vacuuming database..."
 psql -U xnat -d "$DB_NAME" -Atc "VACUUM analyze;"

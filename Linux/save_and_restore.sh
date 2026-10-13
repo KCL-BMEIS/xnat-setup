@@ -117,7 +117,7 @@ then
 
 
 
-  echo "Change dcoker-compose.yml. Set images to xnat:backup,postgres-xnat:backup ,nginx-xnat:backup and restart XNAT"
+  echo "Change docker-compose.yml. Set images to xnat:backup,postgres-xnat:backup ,nginx-xnat:backup and restart XNAT"
 	#docker stack deploy -c docker-compose.yml xnat-stack
 	cd Linux
 

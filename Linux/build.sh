@@ -33,7 +33,13 @@ xnat_home="$xnat_data/xnat"
 postgres_path="$xnat_data/postgresql"
 import_data_folder="$xnat_data/import_data"
 
-#used to be seperate, now uses same as xnat_home
+# clean and replace password
+psql_pwd=$(sed -n 's/^psql_pwd=//p' xnat.cfg | sed 's/\r$//')
+
+#psql_pwd_clean=$(awk -F= '$1=="psql_pwd" {sub(/^[^=]*=/,""); print}' xnat.cfg)
+#echo "psqlpwd: $psql_pwd clean: $psql_pwd_clean"
+#sed -i "s/$psql_pwd/$psql_pwd_clean/g"  "$install_dir/xnat.cfg"
+#psql_pwd="$psql_pwd_clean"
 
 if [ "${in_command,,}" == "upgrade"  ] ; then
     if [ "$CI" != "CI" ]; then
@@ -257,7 +263,7 @@ cp xnat.cfg ./xnat/xnat.cfg
 cp ./xnat/templates/prefs-init.ini-template ./xnat/conf1/prefs-init.ini
 cp ./xnat/templates/site-config-template.json ./xnat/conf1/siteConfig.txt
 cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.properties
-
+cp ./xnat/templates/setup-xnat.sh ./xnat/conf1/setup-xnat.sh
 
 # SET TOMCAT MEMORY
 # Java memory can be more than Xmx
@@ -280,16 +286,17 @@ cp ./xnat/templates/xnat-conf.properties-template ./xnat/conf1/xnat-conf.propert
 #-XX:+DisableExplicitGC \\
 
 # -DDOCKER_TLS_VERIFY=1 Need tls if connecting to docker container service using certifcates
-if [ "$docker_tls" = true ]; then
-  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1 -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+if [ "$docker_tls" =  "true" ]; then
+  echo "docker tls sestting set to true. Configuring container for TLS"
+  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1  -Dxnat.home=/data/xnat/home   -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
 
 else
-  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
+  echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -Dxnat.home=/data/xnat/home -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
 fi
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -Dxnat.home=/data/xnat/home  -XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
+#echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}-XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
 
 # mentions when startig tomcat: EXPERIMENTAL - only works if experimental unlocked
-# echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -XX:+UnlockExperimentalVMOptions. -XX:+EnableJVMCI \"" > ./xnat/conf1/setenv.sh
+echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI  -Dpolyglot.engine.WarnInterpreterOnly=false \"" >> ./xnat/conf1/setenv.sh
 
 ### in Linux, only CATALINA important as runs first
 echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" >> ./xnat/conf1/setenv.sh
@@ -304,9 +311,15 @@ sed -i "s#@SITEURL@#$URL#g" ./xnat/conf1/siteConfig.txt
 sed -i "s/@ADMIN_EMAIL@/$xnat_admin_email/g" ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
 sed -i "s/@PROJECT@/$site_name/g"  ./xnat/conf1/siteConfig.txt
 sed -i "s/@PG_USR@/$psql_user/g"  ./xnat/conf1/xnat-conf.properties
-sed -i "s/@PG_PWD@/$psql_pwd/g"  ./xnat/conf1/xnat-conf.properties
+#sed -i "s/@PG_PWD@/$psql_pwd/g"  ./xnat/conf1/xnat-conf.properties
 sed -i  "s/@SITE@/$site_name/g"    ./xnat/conf1/prefs-init.ini ./xnat/conf1/siteConfig.txt
 sed -i  "s|/xnat-data|$xnat_data|g" ./xnat/conf1/setup-xnat.sh
+
+if [ "$ldap" =  "true" ]; then
+  echo "LDAP installed, copying config files from ./Linux/ldap"
+   cp ./Linux/ldap/*-provider.properties ./xnat/conf1/
+   #sed -i  "s|#ADD  conf1/*-pro|ADD  conf1/*-pro|g" ./xnat/dockerfile
+fi
 
 
 
@@ -362,7 +375,8 @@ then
          docker secret rm pgpass
          sleep 20
       fi
-      echo "$psql_pwd" | docker secret create pgpass -
+
+      printf '%s'  "$psql_pwd" | docker secret create pgpass -
       #?  create complex password? openssl rand -base64 20 | docker secret create pgpass_password -
       #NGINX - need for key
 fi
@@ -429,6 +443,9 @@ else
 fi
 
 
+
+
+
 # DOCKER_BUILDKIT=1  ? makes faster
 echo "############### Building Docker Images, XNAT version: $xnat_version   timezone: $timezone"
 
@@ -462,23 +479,24 @@ warning_messages="$(/bin/bash download_plugins.sh)"
 cp  ../plugins/*.jar  "$xnat_home/scripts/plugins"
 cd ..
 
+#protect certificates
+chmod -R 660 "$xnat_home/certificates/"
+
 echo "############ Ignore error if node already part of swarm...."
 docker swarm init
 
 echo "############ Deploying XNAT Docker Stack..."
 docker stack deploy -c docker-compose.yml xnat-stack
-rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
+
 
 sleep 10
+
 #COnfigure postgresql settings
 echo "############ Changing Postgresql Settings..."
 cd postgres
   /bin/bash set_postgres_db.sh
   rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
-
-#protect certificates
-chmod -R 660 "$xnat_home/certificates/"
 
 
 # print warning messages

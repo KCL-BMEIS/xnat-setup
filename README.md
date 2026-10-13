@@ -2,6 +2,19 @@
 
 ## Please read full instructions: https://github.com/KCL-BMEIS/xnat-setup/wiki
 
+## Updates 15th September 
+* setup-xnat.sh moved to templates, as replaces mount points (xnat-data) when rebuilding
+* pg_maintnence.sh: removed reindex, as not necessarily good to run.
+* setenv.sh: java_opts updated, set in build.sh.
+* pg_pwd written to xnat-conf.properties when container starts, from docker secret. This way avoids hardcoding, and writes escape charaters for special characters.
+* xnat.war and dqr plugin urls switched from bitbucket to github
+* ldap configured to setup from build.sh script if ldap plugin installed.
+
+## Updates 27 August 2026
+* Nginx logrotate on host works.
+* build.sh: more robust reading of psql_pwd
+* build.sh: removed check after docker stack deploy, so continues if fails.
+
 ## Updates 9th May 2026 - JDK21
 * Uses tomcat:9-jdk21-temurin-noble base image for XNAT
 * garbage collector changed , with G1GC, and EnableJVMCI

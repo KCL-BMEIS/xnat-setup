@@ -56,8 +56,10 @@ if [ "$container_service" = true ]; then
 fi
 
 if [ "$dqr" = true ]; then
+  #https://github.com/NrgXnat/dicom-query-retrieve/releases/download/3.1.0/dicom-query-retrieve-3.1.0-xpl.jar
+  #    "${bitbucket_repo}/xnatdev/dicom-query-retrieve/downloads/dicom-query-retrieve-${dqr_version}-xpl.jar" \
   download_jar \
-    "${bitbucket_repo}/xnatdev/dicom-query-retrieve/downloads/dicom-query-retrieve-${dqr_version}-xpl.jar" \
+      "${github_repo}/dicom-query-retrieve/releases/download/${dqr_version}/dicom-query-retrieve-${dqr_version}-xpl.jar" \
     "dicom-query-retrieve" \
     "dicom-query-retrieve-${dqr_version}-xpl.jar" \
     "dqr plugin"

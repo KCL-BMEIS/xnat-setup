@@ -1,4 +1,4 @@
-FROM postgres:16-alpine
+FROM postgres:17-alpine
 #neeedd to ensure host and containers have the same time
 ARG TIMEZONE
 RUN apk add tzdata  --no-cache

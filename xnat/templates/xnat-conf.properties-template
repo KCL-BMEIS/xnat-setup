@@ -19,14 +19,15 @@ hibernate.show_sql=false
 hibernate.cache.use_second_level_cache=true
 hibernate.cache.use_query_cache=true
 
+
 # default  Hikari. Can use DBCP2 Basic Data Source or HikariCP
 # https://wiki.xnat.org/documentation/configuring-jdbc-connection-pools
-# orginal: datasource.class=com.zaxxer.hikari.HikariDataSource
-spring.datasource.type=com.zaxxer.hikari.HikariDataSource
-spring.datasource.hikari.data-source-properties.cachePrepStmts=true
+datasource.class=com.zaxxer.hikari.HikariDataSource
+# spring.datasource.type=com.zaxxer.hikari.HikariDataSource
+# spring.datasource.hikari.data-source-properties.cachePrepStmts=true
 
 # added
 spring.http.multipart.max-file-size=1073741824
 spring.http.multipart.max-request-size=1073741824
 # Ensures large files are written to disk instead of being held in memory, preventing OutOfMemoryError
-spring.servlet.multipart.file-size-threshold=2MB
+# spring.servlet.multipart.file-size-threshold=2MB

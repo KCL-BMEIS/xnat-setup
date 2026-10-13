@@ -8,6 +8,15 @@ dos2unix /opt/scripts/*
 dos2unix /data/xnat/home/xnat.cfg
 dos2unix /data/xnat/home/config/*
 
+psql_pwd="$(head /run/secrets/pgpass)"
+export PGPASSWORD="$psql_pwd"
+perl -pi -e '
+    my $p = $ENV{PGPASSWORD};
+    $p =~ s/\\/\\\\/g;
+    $p =~ s/=/\\=/g;
+    $p =~ s/:/\\:/g;
+    s/\@PG_PWD\@/$p/g;
+' /data/xnat/home/config/xnat-conf.properties
 
 apt-get -yq update
 apt-get -yq upgrade
