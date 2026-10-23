@@ -296,7 +296,9 @@ fi
 #echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}-XX:+UseG1GC   -Djava.awt.headless=true -XX:+ParallelRefProcEnabled -XX:ParallelGCThreads=${cpu_cores}   -XX:+UseStringDeduplication  \"" >> ./xnat/conf1/setenv.sh
 
 # mentions when startig tomcat: EXPERIMENTAL - only works if experimental unlocked
-echo "export CATALINA_OPTS=\"\${CATALINA_OPTS} -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI  -Dpolyglot.engine.WarnInterpreterOnly=false \"" >> ./xnat/conf1/setenv.sh
+echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -XX:+UseContainerSupport  -Djava.awt.headless=true  -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI  -Dpolyglot.engine.WarnInterpreterOnly=false \"" >> ./xnat/conf1/setenv.sh
+
+
 
 ### in Linux, only CATALINA important as runs first
 echo "export JAVA_OPTS=\"\${JAVA_OPTS} -Xms${Xms} -Xmx${Xmx} \"" >> ./xnat/conf1/setenv.sh
@@ -318,6 +320,9 @@ sed -i  "s|/xnat-data|$xnat_data|g" ./xnat/conf1/setup-xnat.sh
 if [ "$ldap" =  "true" ]; then
   echo "LDAP installed, copying config files from ./Linux/ldap"
    cp ./Linux/ldap/*-provider.properties ./xnat/conf1/
+   if [  "${in_command,,}"  == "ci" ]; then
+      rm ./xnat/conf1/ldap-provider.properties
+    fi
    #sed -i  "s|#ADD  conf1/*-pro|ADD  conf1/*-pro|g" ./xnat/dockerfile
 fi
 
@@ -446,7 +451,7 @@ fi
 
 
 
-# DOCKER_BUILDKIT=1  ? makes faster
+# DOCKER_BUILDKIT=1  ? makes faster - already default, ignore
 echo "############### Building Docker Images, XNAT version: $xnat_version   timezone: $timezone"
 
 docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -t xnat:"${xnat_version}"  .
@@ -486,6 +491,7 @@ echo "############ Ignore error if node already part of swarm...."
 docker swarm init
 
 echo "############ Deploying XNAT Docker Stack..."
+export shared_buffers="$shared_buffers"
 docker stack deploy -c docker-compose.yml xnat-stack
 
 

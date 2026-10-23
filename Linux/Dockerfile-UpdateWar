@@ -1,4 +1,4 @@
-ARG OLD_XNAT_VERSION="xnat:latest"
+ARG OLD_XNAT_VERSION="xnat:1.10.2.1"
 FROM ${OLD_XNAT_VERSION}
 
 # Use update_xnat_war.sh - it will use this file to build a new docker image.
@@ -10,8 +10,8 @@ ARG TOMCAT_XNAT_FOLDER=ROOT
 ARG TOMCAT_XNAT_FOLDER_PATH=${CATALINA_HOME}/webapps/${TOMCAT_XNAT_FOLDER}
 
 RUN apt-get -yq update && apt-get -yq upgrade
-
-RUN curl -L -o /tmp/xnat.war  https://api.bitbucket.org/2.0/repositories/xnatdev/xnat-web/downloads/xnat-web-${XNAT_VER}.war
+RUN curl -L -o /tmp/xnat.war https://github.com/NrgXnat/xnat/releases/download/${XNAT_VER}/xnat-web-${XNAT_VER}.war
+#RUN curl -L -o /tmp/xnat.war  https://api.bitbucket.org/2.0/repositories/xnatdev/xnat-web/downloads/xnat-web-${XNAT_VER}.war
 #for testing
 #ADD xnat.war /tmp/
 RUN rm -rf ${CATALINA_HOME}/webapps/*

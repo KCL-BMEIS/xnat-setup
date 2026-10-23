@@ -49,7 +49,7 @@ fi
 
 if [ "$container_service" = true ]; then
   download_jar \
-    "${bitbucket_repo}/xnatdev/container-service/downloads/container-service-${container_service_version}-fat.jar" \
+  "${github_repo}/container-service/releases/download/${container_service_version}/container-service-${container_service_version}-fat.jar" \
     "container-ser" \
     "container-service-${container_service_version}-fat.jar" \
     "container service plugin"

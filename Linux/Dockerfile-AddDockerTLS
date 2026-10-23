@@ -8,7 +8,7 @@
 # You can change the output image, then edit docker-compose.yml to use it, for example -t xnat:1.10.0TLS
 # then ./restart.sh
 
-ARG XNAT_IMAGE=xnat:1.10.0
+ARG XNAT_IMAGE=xnat:1.10.2.1
 FROM $XNAT_IMAGE
 
 RUN apt-get -yq update && apt-get -yq upgrade

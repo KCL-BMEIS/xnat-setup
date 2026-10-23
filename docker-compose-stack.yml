@@ -45,7 +45,7 @@ services:
          POSTGRES_USER: @PG_USER@
          POSTGRES_PASSWORD_FILE: /run/secrets/pgpass
          POSTGRES_DB: xnat
-       command: postgres
+       command: ["postgres", "-c", "shared_buffers=${shared_buffers}"]
        secrets:
          - pgpass
        #networks:

@@ -46,6 +46,7 @@ sleep 30
 
 
 echo "Redeploying XNAT"
+export shared_buffers="$shared_buffers"
 docker stack deploy -c $install_dir/docker-compose.yml xnat-stack
 
 sleep 30

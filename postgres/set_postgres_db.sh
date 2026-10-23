@@ -56,5 +56,7 @@ sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET wal_compression = 
 #sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_vacuum_cost_delay = 2ms"        # Minimizes sleep time between worker cycles
 #sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_work_mem = 256MB"
 
+# does not affect shared buffers qhich requires service restart
+sudo docker exec -it "$PG" psql -U xnat -c  "SELECT pg_reload_conf()"
 
 docker commit "$PG"  postgres-xnat

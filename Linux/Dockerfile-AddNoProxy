@@ -7,7 +7,7 @@
 # Run sudo ./restart.sh
 
 
-ARG XNAT_IMAGE=xnat:1.10.0
+ARG XNAT_IMAGE=xnat:1.10.2.1
 FROM $XNAT_IMAGE
 
 

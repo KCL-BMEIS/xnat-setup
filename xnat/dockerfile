@@ -22,10 +22,22 @@ ARG XNAT_HOME=/data/xnat/home
 ARG TOMCAT_XNAT_FOLDER=ROOT
 ARG TOMCAT_XNAT_FOLDER_PATH=${CATALINA_HOME}/webapps/${TOMCAT_XNAT_FOLDER}
 
+
+# Non-root runtime uid:gid. 1000:1000 = the helm chart's `tomcat` user/group,
+# matching its securityContext runAsUser: 1000 / fsGroup: 1000, so the image is
+# a drop-in for the chart with no runAsUser/runAsGroup override needed.
+#ARG XNAT_UID=1000
+#ARG XNAT_GID=1000
+
+
 # Fix sh and install dependencies
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN export DEBIAN_FRONTEND=noninteractive && export TZ=${TZ}  \
-    && apt-get -yq update && apt-get -yq install dcmtk dos2unix mc cron curl python3 python3-pip zip jq   tzdata postgresql-common
+    && apt-get -yq update && apt-get -yq install dcmtk dos2unix mc cron curl python3 python3-pip zip jq   tzdata postgresql-common \
+      netcat-traditional \
+        iputils-ping \
+        net-tools \
+        traceroute \
 
 # require postgresql-common to automatically configure postgresql repositories
 RUN  echo 0 | /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
@@ -75,6 +87,35 @@ RUN apt-get -yq update && apt -yq install python3-pydicom python3-docopt python3
 # if ldap, uncomments in build.sh
 ADD  conf1/*-provider.properties /data/xnat/home/config/auth/
 
+
+
+
+ARG INSTALL_OPENCV=true
+# No default: BuildKit populates TARGETARCH with the architecture actually being built for, and a
+# default here would mask it -- an arm64 build would silently install the amd64 native.
+
+# uname --all
+ARG TARGETARCH=amd64
+ARG OPENCV_VERSION=5.0.0-dcm
+ARG OPENCV_BASE=https://nrgxnat.jfrog.io/nrgxnat/libs-release/org/weasis/thirdparty/org/opencv/libopencv_java/${OPENCV_VERSION}
+RUN set -eu; \
+    if [ "${INSTALL_OPENCV}" != "true" ]; then \
+        echo "INSTALL_OPENCV=${INSTALL_OPENCV}, skipping the OpenCV native"; \
+    else \
+        case "${TARGETARCH}" in \
+            amd64) classifier=linux-x86-64;  sha256=3552c806744192c734f6cf492bf95a139cbfd6f800ff662688d18b6a199f92f1 ;; \
+            arm64) classifier=linux-aarch64; sha256=b07190e6ef6e233c2b7dc7f945c5b470be44450a49f9915aeaaa86f8799ef6a0 ;; \
+            *) echo "No OpenCV native published for TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+        esac; \
+        mkdir -p /usr/java/packages/lib; \
+        curl -fsSL --retry 3 -o /usr/java/packages/lib/libopencv_java.so \
+             "${OPENCV_BASE}/libopencv_java-${OPENCV_VERSION}-${classifier}.so"; \
+        echo "${sha256}  /usr/java/packages/lib/libopencv_java.so" | sha256sum -c -; \
+    fi
+
+RUN sed -i "s|CATALINA_OPTS} |CATALINA_OPTS} -XX:+UseContainerSupport |g" /usr/local/tomcat/bin/setenv.sh
+
+# RUN sed -i "s|CATALINA_OPTS} |CATALINA_OPTS} -XX:+UseContainerSupport -Djava.library.path=/opt/opencv/lib |g" /usr/local/tomcat/bin/setenv.sh
 
 ENV XNAT_HOME=${XNAT_HOME}
 
