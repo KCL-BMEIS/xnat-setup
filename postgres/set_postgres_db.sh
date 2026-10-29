@@ -42,6 +42,9 @@ sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET huge_pages = $huge
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET jit = $jit"
 sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET wal_compression = $wal_compression"
 
+# Only do this with security_opt in docker compose, running on modern Linux. FAST but
+# sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET io_method  = io_uring"
+
 #sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum = on"                           # Essential. Never turn this off.
 ## Frequency & Multi-tasking
 #sudo docker exec -it "$PG" psql -U xnat -c  "ALTER SYSTEM SET autovacuum_max_workers = 4"               # Increase to 4 or 6 if managing massive data catalogs

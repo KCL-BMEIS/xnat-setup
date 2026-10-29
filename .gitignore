@@ -27,6 +27,7 @@ docker-compose.yml
 **/tests
 test.sh
 test-proxy.sh
+docker-compose-test.yml
 #docker-compose-test.yml
 #orthanc.json
 #/tests/xnat_test_linux.cfg

@@ -9,3 +9,5 @@
 
 * nginx -s reload
 * client_max_body_size                0; - this means no limit.
+
+docker build   --build-arg TIMEZONE=${timezone} -t nginx-xnat .

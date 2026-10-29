@@ -2,7 +2,7 @@
 
 ## Please read full instructions: https://github.com/KCL-BMEIS/xnat-setup/wiki
 
-## Updates 23rd October - 1.10.2.1 + 
+## Updates 29th October - 1.10.2.1 + 
 * setup-xnat.sh moved to templates, as replaces mount points (xnat-data) when rebuilding
 * pg_maintnence.sh: removed reindex, as not necessarily good to run.
 * setenv.sh: java_opts updated, set in build.sh.
@@ -10,7 +10,9 @@
 * xnat.war and dqr plugin urls switched from bitbucket to github
 * ldap configured to setup from build.sh script if ldap plugin installed.
 * postgresql settings updated, shared buffers now in docker-compose.
-* dependency updates for 1.10.2+
+* env_variables used to set paths in docker-compose.yml.
+* dependency updates for 1.10.2+, extra packages installed by default.
+* Postgresql v17 and docker updated tomcat base image for security reasons.
 
 ## Updates 27 August 2026
 * Nginx logrotate on host works.

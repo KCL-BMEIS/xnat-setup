@@ -228,6 +228,7 @@ if [  "${in_command,,}"  != "upgrade" ]; then
     mkdir -p "$xnat_home/nginx_logs/"
     mkdir -p "$xnat_home/build/"
     mkdir -p "$xnat_home/inbox/"
+    mkdir -p "$xnat_home/ldap/"
     mkdir -p "$import_data_folder"
     chmod 777 "$import_data_folder"
 
@@ -287,7 +288,7 @@ cp ./xnat/templates/setup-xnat.sh ./xnat/conf1/setup-xnat.sh
 
 # -DDOCKER_TLS_VERIFY=1 Need tls if connecting to docker container service using certifcates
 if [ "$docker_tls" =  "true" ]; then
-  echo "docker tls sestting set to true. Configuring container for TLS"
+  echo "docker tls set to true. Configuring container for TLS"
   echo "export CATALINA_OPTS=\"\${CATALINA_OPTS}  -DDOCKER_TLS_VERIFY=1  -Dxnat.home=/data/xnat/home   -Xms${Xms} -Xmx${Xmx} \"" > ./xnat/conf1/setenv.sh
 
 else
@@ -319,9 +320,9 @@ sed -i  "s|/xnat-data|$xnat_data|g" ./xnat/conf1/setup-xnat.sh
 
 if [ "$ldap" =  "true" ]; then
   echo "LDAP installed, copying config files from ./Linux/ldap"
-   cp ./Linux/ldap/*-provider.properties ./xnat/conf1/
+   cp ./Linux/ldap/auth/*-provider.properties "$xnat_home/ldap/"
    if [  "${in_command,,}"  == "ci" ]; then
-      rm ./xnat/conf1/ldap-provider.properties
+      rm "$xnat_home/ldap/ldap-provider.properties"
     fi
    #sed -i  "s|#ADD  conf1/*-pro|ADD  conf1/*-pro|g" ./xnat/dockerfile
 fi
@@ -388,14 +389,8 @@ fi
 
 DOCKER_FILE='docker-compose.yml'
 cp docker-compose-stack.yml docker-compose.yml
-
 sed -i  "s/#LINX//g"   "$DOCKER_FILE"
-sed -i  "s#@ARCHIVE_PATH@#$xnat_home#g"   "$DOCKER_FILE"
-sed -i  "s#@PWD@#$install_dir#g"   "$DOCKER_FILE"
-sed -i  "s#@XNAT_HOME@#$xnat_home#g"   "$DOCKER_FILE"
-sed -i  "s#@POSTGRES_PATH@#$postgres_path#g"   "$DOCKER_FILE"
-sed -i  "s#@IMPORT_DATA_FOLDER@#$import_data_folder#g"   "$DOCKER_FILE"
-sed -i "s/@PG_USER@/$psql_user/g"   "$DOCKER_FILE"
+
 
 
 #### SET PROXY
@@ -454,7 +449,7 @@ fi
 # DOCKER_BUILDKIT=1  ? makes faster - already default, ignore
 echo "############### Building Docker Images, XNAT version: $xnat_version   timezone: $timezone"
 
-docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -t xnat:"${xnat_version}"  .
+docker build --build-arg XNAT_VERSION=${xnat_version}  --build-arg TIMEZONE=${timezone}  -t xnat:"${xnat_version}" .
 rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 cd ..
 # set version of xnat image in docker-compose
@@ -492,6 +487,8 @@ docker swarm init
 
 echo "############ Deploying XNAT Docker Stack..."
 export shared_buffers="$shared_buffers"
+export xnat_data="$xnat_data"
+export psql_user="$psql_user"
 docker stack deploy -c docker-compose.yml xnat-stack
 
 

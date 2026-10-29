@@ -47,6 +47,8 @@ sleep 30
 
 echo "Redeploying XNAT"
 export shared_buffers="$shared_buffers"
+export xnat_data="$xnat_data"
+export psql_user="xnat" # "$psql_user"
 docker stack deploy -c $install_dir/docker-compose.yml xnat-stack
 
 sleep 30

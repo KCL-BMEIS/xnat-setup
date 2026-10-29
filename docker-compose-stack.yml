@@ -21,13 +21,14 @@ services:
        #networks:
          #- xnat-net
        volumes:
-         - @ARCHIVE_PATH@/archive:/data/xnat/archive
-         - @XNAT_HOME@/build:/data/xnat/build
-         - @XNAT_HOME@/tomcat_logs:/data/xnat/home/logs
-         - @XNAT_HOME@/scripts:/data/scripts
-         - @XNAT_HOME@/inbox:/data/xnat/inbox
+         - ${xnat_data}/xnat/archive:/data/xnat/archive
+         - ${xnat_data}/xnat/build:/data/xnat/build
+         - ${xnat_data}/xnat/tomcat_logs:/data/xnat/home/logs
+         - ${xnat_data}/xnat/scripts:/data/scripts
+         - ${xnat_data}/xnat/inbox:/data/xnat/inbox
+         - ${xnat_data}/xnat/ldap:/data/xnat/home/config/auth/
          #LINX- /var/run/docker.sock:/var/run/docker.sock
-         - @IMPORT_DATA_FOLDER@:/data/import_data
+         - ${xnat_data}/import_data:/data/import_data
          #WINX- ./volume/postgres-data:/pg_backup
     xnat-db:
        image: postgres-xnat:latest
@@ -42,9 +43,13 @@ services:
               cpus: '3'
               memory: 4000M
        environment:
-         POSTGRES_USER: @PG_USER@
+         POSTGRES_USER: ${psql_user}
          POSTGRES_PASSWORD_FILE: /run/secrets/pgpass
          POSTGRES_DB: xnat
+        # only uncomment on modern Linux hosts with nvme and if have permission to do so.
+         # uncomment
+#       security_opt:
+#         - seccomp:unconfined
        command: ["postgres", "-c", "shared_buffers=${shared_buffers}"]
        secrets:
          - pgpass
@@ -53,7 +58,7 @@ services:
        volumes:
          # set shared memory limit when using docker compose - default 64mb, too small. Set to 1GB
          - shm:/dev/shm # mount the tmpfs-backed volume here
-         #LINX- @POSTGRES_PATH@/postgres-data:/var/lib/postgresql/data
+         #LINX- ${xnat_data}/postgresql/postgres-data:/var/lib/postgresql/data
     xnat-nginx:
        image: nginx-xnat:latest
        deploy:
@@ -63,8 +68,8 @@ services:
           placement:
             constraints: [ node.role == manager ]
        volumes:
-        - @XNAT_HOME@/certificates:/etc/ssl
-        - @XNAT_HOME@/nginx_logs:/var/log/nginx
+        - ${xnat_data}/xnat/certificates:/etc/ssl
+        - ${xnat_data}/xnat/nginx_logs:/var/log/nginx
         #LINX- /var/run/docker.sock:/var/run/docker.sock:ro
        ports:
         - "80:80"
